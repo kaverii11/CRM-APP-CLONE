@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRM Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <h1>CRM Dashboard</h1>
+    </header>
+    <main class="container">
+        <div class="grid">
+            <section class="card">
+                <h3>Create New Customer (Epic 2)</h3>
+                <form id="customer-form">
+                    <div class="form-group">
+                        <label for="cust-name">Name</label>
+                        <input type="text" id="cust-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-email">Email</label>
+                        <input type="email" id="cust-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-phone">Phone</label>
+                        <input type="tel" id="cust-phone">
+                    </div>
+                    <button type="submit">Create Customer</button>
+                </form>
+            </section>
+
+            <section class="card">
+                <h3>Create Support Ticket (Epic 4)</h3>
+                <form id="ticket-form">
+                    <div class="form-group">
+                        <label for="ticket-customer">Customer</label>
+                        <select id="ticket-customer" required>
+                            <option value="">Loading customers...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ticket-subject">Subject</label>
+                        <input type="text" id="ticket-subject" disabled>
+                    </div>
+                    <button type="submit" disabled>Create Ticket</button>
+                </form>
+            </section>
+        </div>
+    </main>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

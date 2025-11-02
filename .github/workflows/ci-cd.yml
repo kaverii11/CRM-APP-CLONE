@@ -1,76 +1,47 @@
-name: CI-CD Pipeline
+name: CRM CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          python-version: 3.9
 
-      - name: Install dependencies
+      # 1. Build Stage
+      - name: Build - Install Dependencies
         run: |
-          if [ -f package.json ]; then
-            npm ci
-          else
-            echo "No package.json found, skipping npm install"
-          fi
-
-      - name: Run linting
+          pip install -r requirements.txt
+      
+      # 2. Test Stage
+      - name: Test - Run Pytest
         run: |
-          if [ -f package.json ] && npm list --depth=0 | grep -q eslint; then
-            npm run lint
-          else
-            echo "No linting configured, skipping..."
-          fi
-
-      - name: Run tests
+          pytest
+          
+      # 3. Coverage Stage
+      - name: Coverage - Run Pytest-Cov
         run: |
-          if [ -f package.json ] && npm list --depth=0 | grep -q jest; then
-            npm test
-          else
-            echo "No tests configured, skipping..."
-          fi
-
-      - name: Build application
+          pytest --cov=app --cov-report=xml --cov-fail-under=75
+        # [cite_start]This command will FAIL the pipeline if coverage is < 75% [cite: 628]
+          
+      # 4. Lint Stage
+      - name: Lint - Run Pylint
         run: |
-          if [ -f package.json ]; then
-            npm run build --if-present
-          else
-            echo "No build script found, skipping..."
-          fi
+          pylint app.py --fail-under=7.5
+        # [cite_start]This command will FAIL the pipeline if score is < 7.5 [cite: 676]
 
-      - name: Security audit
+      # 5. Security Stage
+      - name: Security - Run Bandit
         run: |
-          if [ -f package.json ]; then
-            npm audit --audit-level=high
-          else
-            echo "No package.json found, skipping security audit"
-          fi
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Deploy to staging
-        run: echo "Deploying to staging environment..."
-        
-      - name: Run integration tests
-        run: echo "Running integration tests..."
-        
-      - name: Deploy to production
-        run: echo "Deploying to production environment..."
+          bandit -r app.py -l --fail-on-issue
+        # This fails on any Low-level issue or higher

@@ -1,0 +1,7 @@
+Flask
+firebase-admin
+pytest
+pytest-mock
+pytest-cov
+pylint
+bandit

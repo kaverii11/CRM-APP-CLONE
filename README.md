@@ -117,3 +117,13 @@ This project is developed for educational purposes as part of the PES University
 **Institution:** PES University  
 **Academic Year:** 2025  
 **Semester:** 5th Sem
+
+## 🚀 CI/CD Pipeline (Epic 11)
+
+This project uses a 5-stage GitHub Actions pipeline to ensure code quality and security.
+
+1.  **Build**: Installs all dependencies from `requirements.txt`.
+2.  **Test**: Runs all unit and integration tests using `pytest`.
+3.  **Coverage**: Checks test coverage with `pytest-cov`. [cite_start]The build fails if coverage is **< 75%**[cite: 628].
+4.  **Lint**: Analyzes code quality with `pylint`. [cite_start]The build fails if the score is **< 7.5/10**[cite: 676].
+5.  **Security**: Scans for vulnerabilities with `bandit`. The build fails if any issues are found.
