@@ -9,6 +9,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -19,31 +20,27 @@ jobs:
           python-version: 3.9
 
       - name: Create Firebase Service Account Key
+        # This step takes the secret and writes it to the file
         run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > serviceAccountKey.json
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      # 1. Build Stage
       - name: Build - Install Dependencies
         run: |
           pip install -r requirements.txt
       
-      # 2. Test Stage
       - name: Test - Run Pytest
         run: |
           pytest
           
-      # 3. Coverage Stage
       - name: Coverage - Run Pytest-Cov
         run: |
           pytest --cov=app --cov-report=xml --cov-fail-under=75
           
-      # 4. Lint Stage
       - name: Lint - Run Pylint
         run: |
           pylint app.py --fail-under=7.5
 
-      # 5. Security Stage
       - name: Security - Run Bandit
         run: |
           bandit -r app.py -l --fail-on-issue
