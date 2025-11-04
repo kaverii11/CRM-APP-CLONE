@@ -29,7 +29,7 @@ jobs:
       - name: Coverage - Run Pytest-Cov
         run: |
           # Use single quotes around the omit pattern to prevent shell expansion
-          pytest --cov=app --cov-report=xml --cov-omit='*__main__*' --cov-fail-under=75
+          pytest --cov=app --cov-report=xml --cov-fail-under=75
           
       # 4. Lint Stage
       - name: Lint - Run Pylint
