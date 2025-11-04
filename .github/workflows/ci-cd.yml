@@ -38,4 +38,4 @@ jobs:
       # 5. Security Stage
       - name: Security - Run Bandit
         run: |
-          bandit -r app.py -l --fail-on-issue
+          bandit -r app.py -l
