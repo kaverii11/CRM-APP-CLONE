@@ -10,23 +10,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
           python-version: 3.9
-
       - name: Create Firebase Service Account Key
         run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > serviceAccountKey.json
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-
-      # 1. Build Stage
       - name: Build - Install Dependencies
         run: |
           pip install -r requirements.txt
-      
-      # 2. Test Stage
       - name: Test - Run Pytest
         run: |
           pytest
@@ -34,17 +28,14 @@ jobs:
       # 3. Coverage Stage
       - name: Coverage - Run Pytest-Cov
         run: |
-          # Omits the __main__ block and fails if coverage is under 75%
-          pytest --cov=app --cov-report=xml --cov-omit="*__main__*" --cov-fail-under=75
+          # Use single quotes around the omit pattern to prevent shell expansion
+          pytest --cov=app --cov-report=xml --cov-omit='*__main__*' --cov-fail-under=75
           
       # 4. Lint Stage
       - name: Lint - Run Pylint
         run: |
-          # Fails if score is under 7.5
           pylint app.py --fail-under=7.5
-
       # 5. Security Stage
       - name: Security - Run Bandit
         run: |
-          # Fails on any issue
           bandit -r app.py -l --fail-on-issue
