@@ -55,3 +55,20 @@ def test_get_customers_success(client):
         assert response.status_code == 200
         assert len(response.json) == 2
         assert response.json[0]['name'] == 'Customer A'
+
+# --- ADD THESE NEW TESTS ---
+
+# Test 4: Test the dashboard route (/)
+def test_dashboard_route(client):
+    """Test that the dashboard page loads."""
+    response = client.get('/')
+    assert response.status_code == 200
+    # Check that it's sending back HTML
+    assert response.content_type == 'text/html; charset=utf-8'
+
+# Test 5: Test the login route (/login)
+def test_login_route(client):
+    """Test that the login page loads."""
+    response = client.get('/login')
+    assert response.status_code == 200
+    assert response.content_type == 'text/html; charset=utf-8'
