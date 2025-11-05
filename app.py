@@ -225,6 +225,4 @@ def convert_lead_to_opportunity(lead_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ... (End of app.py) ...
-
-if __name__ == '__main__':
-    app.run()
+# ... (after convert_lead_to_opportunity) ...
