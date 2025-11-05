@@ -262,7 +262,55 @@ def assign_lead(lead_id):
     except Exception as e: # pylint: disable=broad-except
         print(f"Error in assign_lead: {e}") # Debugging line
         return jsonify({'success': False, 'error': str(e)}), 500
+# --- API Route (NEW - Epic 3.4: Track opportunity status) ---
+@app.route('/api/opportunity/<string:opportunity_id>/status', methods=['PUT'])
+def update_opportunity_status(opportunity_id):
+    """Updates the stage/status of an existing sales opportunity."""
+    ALLOWED_STAGES = ['Qualification', 'Proposal', 'Negotiation', 'Won', 'Lost']
 
+    try:
+        db_conn = get_db()
+        if db_conn is None:
+            return jsonify({"success": False, "error": "Database connection failed"}), 500
+
+        data = request.json
+        new_stage = data.get('stage')
+
+        if not new_stage:
+            return jsonify({"error": "Stage is required in the request body"}), 400
+        
+        if new_stage not in ALLOWED_STAGES:
+            return jsonify({
+                "error": "Invalid stage provided.",
+                "valid_stages": ALLOWED_STAGES
+            }), 400
+
+        opportunity_ref = db_conn.collection('opportunities').document(opportunity_id)
+        
+        # Check if the opportunity exists
+        if not opportunity_ref.get().exists:
+            return jsonify({"error": "Opportunity not found"}), 404
+        
+        # Update the stage
+        update_data = {
+            'stage': new_stage,
+            'updatedAt': firestore.SERVER_TIMESTAMP # pylint: disable=no-member
+        }
+        
+        # If the stage is 'Won' or 'Lost', record the completion timestamp
+        if new_stage in ['Won', 'Lost']:
+            update_data['closedAt'] = firestore.SERVER_TIMESTAMP # pylint: disable=no-member
+        
+        opportunity_ref.update(update_data)
+
+        return jsonify({
+            "success": True, 
+            "message": f"Opportunity {opportunity_id} status updated to {new_stage}"
+        }), 200
+
+    except Exception as e: # pylint: disable=broad-except
+        print(f"Error in update_opportunity_status: {e}") # Debugging line
+        return jsonify({'success': False, 'error': str(e)}), 500
 # ... (End of app.py) ...
 # ... (after convert_lead_to_opportunity) ...
 if __name__ == "__main__":
