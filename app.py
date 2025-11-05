@@ -148,5 +148,91 @@ def delete_customer(customer_id):
 
     except Exception as e: # pylint: disable=broad-except
         return jsonify({"error": str(e)}), 500
+<<<<<<< Updated upstream
+=======
+
+# --- API Route (NEW - Epic 3.1: Capture new leads) ---
+@app.route('/api/lead', methods=['POST'])
+def capture_lead():
+    """Captures a new lead from a form submission and stores it."""
+    try:
+        db_conn = get_db()
+        if db_conn is None:
+            return jsonify({"success": False, "error": "Database connection failed"}), 500
+        
+        data = request.json
+        name = data.get('name')
+        email = data.get('email')
+        source = data.get('source')
+        
+        if not name or not email or not source:
+            return jsonify({'success': False, 'error': 'Name, email, and source are required'}), 400
+        
+        lead_data = {
+            'name': name,
+            'email': email,
+            'source': source,
+            'status': 'New', # Default status as per Story 3.4 context
+            'assigned_to': None, # Placeholder for Story 3.3
+            'createdAt': firestore.SERVER_TIMESTAMP # pylint: disable=no-member
+        }
+        # Store the lead in a separate 'leads' collection
+        doc_ref = db_conn.collection('leads').document()
+        doc_ref.set(lead_data)
+        
+        return jsonify({'success': True, 'id': doc_ref.id}), 201
+        
+    except Exception as e: # pylint: disable=broad-except
+        return jsonify({'success': False, 'error': str(e)}), 500
+# ... (Previous code including capture_lead function) ...
+
+# --- API Route (NEW - Epic 3.2: Convert lead to opportunity) ---
+@app.route('/api/lead/<string:lead_id>/convert', methods=['POST'])
+def convert_lead_to_opportunity(lead_id):
+    """Converts an existing lead into a sales opportunity."""
+    try:
+        db_conn = get_db()
+        if db_conn is None:
+            return jsonify({"success": False, "error": "Database connection failed"}), 500
+
+        lead_ref = db_conn.collection('leads').document(lead_id)
+        lead_doc = lead_ref.get()
+
+        if not lead_doc.exists:
+            return jsonify({"error": "Lead not found"}), 404
+        
+        lead_data = lead_doc.to_dict()
+
+        # 1. Update Lead Status
+        lead_ref.update({
+            'status': 'Converted',
+            'convertedAt': firestore.SERVER_TIMESTAMP # pylint: disable=no-member
+        })
+
+        # 2. Create Opportunity Record (for tracking pipeline)
+        opportunity_data = {
+            'lead_id': lead_id,
+            'name': lead_data.get('name'),
+            'email': lead_data.get('email'),
+            'source': lead_data.get('source'),
+            'stage': 'Qualification', # Initial stage
+            'amount': 0.0, # Placeholder for potential deal size
+            'createdAt': firestore.SERVER_TIMESTAMP # pylint: disable=no-member
+        }
+        opportunity_ref = db_conn.collection('opportunities').document()
+        opportunity_ref.set(opportunity_data)
+
+        return jsonify({
+            "success": True, 
+            "message": f"Lead {lead_id} converted to Opportunity.",
+            "opportunity_id": opportunity_ref.id
+        }), 200
+
+    except Exception as e: # pylint: disable=broad-except
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ... (End of app.py) ...
+
+>>>>>>> Stashed changes
 if __name__ == '__main__':
     app.run()

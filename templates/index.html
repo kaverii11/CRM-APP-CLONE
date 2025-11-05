@@ -31,6 +31,30 @@
             </section>
 
             <section class="card">
+                <h3>Capture New Lead (Epic 3)</h3>
+                <form id="lead-form">
+                    <div class="form-group">
+                        <label for="lead-name">Name</label>
+                        <input type="text" id="lead-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lead-email">Email</label>
+                        <input type="email" id="lead-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lead-source">Source</label>
+                        <select id="lead-source" required>
+                            <option value="">Select source...</option>
+                            <option value="Web Form">Web Form</option>
+                            <option value="Referral">Referral</option>
+                            <option value="Advertisement">Advertisement</option>
+                        </select>
+                    </div>
+                    <button type="submit">Capture Lead</button>
+                </form>
+            </section>
+            
+            <section class="card">
                 <h3>Create Support Ticket (Epic 4)</h3>
                 <form id="ticket-form">
                     <div class="form-group">

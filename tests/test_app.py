@@ -1,3 +1,10 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import werkzeug
+if not hasattr(werkzeug, '__version__'):
+    werkzeug.__version__ = '3.0.0'
+
 import json
 import pytest
 from app import app
@@ -212,3 +219,102 @@ def test_delete_customer_not_found(client):
         
         assert response.status_code == 404
         assert "Customer not found" in response.json['error']
+# --- Tests for Epic 3.1: Capture new leads ---
+
+def test_capture_lead_success(client):
+    """Test the capture_lead function succeeds."""
+    mock_db = MagicMock()
+    mock_ref = MagicMock()
+    mock_ref.id = "new-lead-456"
+    mock_db.collection.return_value.document.return_value = mock_ref
+
+    with patch('app.get_db', return_value=mock_db):
+        lead_data = {'name': 'Test Lead', 'email': 'lead@example.com', 'source': 'Web Form'}
+        response = client.post('/api/lead', json=lead_data)
+
+        assert response.status_code == 201
+        json_data = response.get_json()
+        assert json_data['success'] is True
+        assert json_data['id'] == "new-lead-456"
+
+
+def test_capture_lead_500_error(client):
+    """Test the capture_lead function for a generic 500 error."""
+    lead_data = {'name': 'Test Lead', 'email': 'lead@example.com', 'source': 'Web Form'}
+    
+    with patch('app.get_db', side_effect=Exception("Simulated lead database crash")):
+        
+        response = client.post('/api/lead', json=lead_data)
+        
+        assert response.status_code == 500
+        assert "Simulated lead database crash" in response.json['error']
+# --- Tests for Epic 3.2: Convert lead to opportunity ---
+
+def test_convert_lead_success(client, mocker):
+    """Test the convert_lead_to_opportunity function succeeds."""
+    mock_db = MagicMock()
+    
+    # Mock the lead document that exists
+    mock_lead_doc = MagicMock()
+    mock_lead_doc.exists = True
+    mock_lead_doc.to_dict.return_value = {
+        'name': 'Convert Lead', 
+        'email': 'convert@example.com', 
+        'source': 'Web Form', 
+        'status': 'New'
+    }
+    
+    # Mock the reference for the new opportunity
+    mock_opportunity_ref = MagicMock()
+    mock_opportunity_ref.id = "new-opp-789"
+    
+    # Mock the document() call chain
+    mock_db.collection.return_value.document.return_value.get.return_value = mock_lead_doc
+    
+    # Mock the .add() or .document().set() for opportunity creation
+    # Since app.py uses .document().set(), we mock the opportunity reference
+    mock_db.collection.return_value.document.side_effect = [
+        # First call is for the Lead document, so we return the mocked lead ref
+        MagicMock(id='lead-to-convert', get=lambda: mock_lead_doc, update=MagicMock()),
+        # Second call is for the new Opportunity document
+        mock_opportunity_ref
+    ]
+
+    with patch('app.get_db', return_value=mock_db):
+        response = client.post('/api/lead/lead-to-convert/convert')
+        
+        assert response.status_code == 200
+        assert response.json['success'] is True
+        assert "converted" in response.json['message']
+        assert response.json['opportunity_id'] == "new-opp-789"
+        
+        # Verify the lead was updated (status: Converted)
+        mock_db.collection('leads').document('lead-to-convert').update.assert_called_once()
+        # Verify a new opportunity was created
+        mock_db.collection('opportunities').document.assert_called()
+
+def test_convert_lead_not_found(client):
+    """Test the convert_lead_to_opportunity function fails if lead is missing."""
+    mock_db = MagicMock()
+    
+    # Mock the lead document that does NOT exist
+    mock_lead_doc = MagicMock()
+    mock_lead_doc.exists = False
+    
+    mock_db.collection.return_value.document.return_value.get.return_value = mock_lead_doc
+    
+    with patch('app.get_db', return_value=mock_db):
+        response = client.post('/api/lead/non-existent-lead/convert')
+        
+        assert response.status_code == 404
+        assert 'Lead not found' in response.json['error']
+
+def test_convert_lead_500_error(client):
+    """Test the convert_lead_to_opportunity function for a generic 500 error."""
+    
+    with patch('app.get_db', side_effect=Exception("Simulated conversion crash")):
+        
+        response = client.post('/api/lead/any-id/convert')
+        
+        assert response.status_code == 500
+        assert "Simulated conversion crash" in response.json['error']
