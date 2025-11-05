@@ -81,7 +81,6 @@ def get_customers():
         return jsonify(customers), 200
     except Exception as e: # pylint: disable=broad-except
         return jsonify({"error": str(e)}), 500
-# Add this new route to app.py
 
 @app.route('/api/customer/<string:customer_id>', methods=['GET'])
 def get_customer_details(customer_id):
@@ -99,8 +98,6 @@ def get_customer_details(customer_id):
     except Exception as e: # pylint: disable=broad-except
         return jsonify({"error": str(e)}), 500
     
-# Add this new route to app.py
-
 @app.route('/api/customer/<string:customer_id>', methods=['PUT'])
 def update_customer_details(customer_id):
     """Updates a customer's details by their ID."""
@@ -128,8 +125,6 @@ def update_customer_details(customer_id):
     except Exception as e: # pylint: disable=broad-except
         return jsonify({"error": str(e)}), 500
     
-# Add this new route to app.py
-
 @app.route('/api/customer/<string:customer_id>', methods=['DELETE'])
 def delete_customer(customer_id):
     """Deletes a customer by their ID."""
@@ -148,8 +143,6 @@ def delete_customer(customer_id):
 
     except Exception as e: # pylint: disable=broad-except
         return jsonify({"error": str(e)}), 500
-<<<<<<< Updated upstream
-=======
 
 # --- API Route (NEW - Epic 3.1: Capture new leads) ---
 @app.route('/api/lead', methods=['POST'])
@@ -233,6 +226,5 @@ def convert_lead_to_opportunity(lead_id):
 
 # ... (End of app.py) ...
 
->>>>>>> Stashed changes
 if __name__ == '__main__':
     app.run()
