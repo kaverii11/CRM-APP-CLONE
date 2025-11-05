@@ -7,16 +7,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check for saved theme in localStorage and apply it
     const currentTheme = localStorage.getItem("theme");
     if (currentTheme === "dark") {
-        // We apply the class to the <html> tag (document.documentElement)
         document.documentElement.classList.add("dark-mode");
     }
 
     if (themeToggle) {
         themeToggle.addEventListener("click", () => {
-            // Toggle the .dark-mode class on the <html> tag
             document.documentElement.classList.toggle("dark-mode");
-
-            // Save the user's preference
             let theme = "light";
             if (document.documentElement.classList.contains("dark-mode")) {
                 theme = "dark";
@@ -30,13 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (mobileMenuBtn) {
         mobileMenuBtn.addEventListener("click", () => {
-            // We toggle a class on the <body> to show/hide the sidebar
             document.body.classList.toggle("sidebar-open");
         });
     }
 
     // --- 3. CUSTOMER PAGE LOGIC ---
-    // Only run this code if we are on the customers page
     if (window.location.pathname === '/customers') {
         const addCustomerBtn = document.getElementById("add-customer-btn");
         const modal = document.getElementById("customer-modal");
@@ -46,40 +40,33 @@ document.addEventListener("DOMContentLoaded", () => {
         const modalTitle = document.getElementById("modal-title");
         const customerIdField = document.getElementById("customer-id");
 
-        // Function to open the modal
         const openModal = () => {
             modalTitle.textContent = "Add New Customer";
             customerForm.reset();
-            customerIdField.value = ""; // Clear ID field
+            customerIdField.value = "";
             modal.style.display = "flex";
         };
 
-        // Function to close the modal
         const closeModal = () => {
             modal.style.display = "none";
         };
 
-        // Event listeners for modal
         addCustomerBtn.addEventListener("click", openModal);
         modalCloseBtn.addEventListener("click", closeModal);
         
-        // Close modal if user clicks on the overlay
         modal.addEventListener("click", (e) => {
             if (e.target === modal) {
                 closeModal();
             }
         });
 
-        // Function to load all customers into the table
         async function loadCustomers() {
             try {
                 const response = await fetch('/api/customers');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch customers');
-                }
+                if (!response.ok) throw new Error('Failed to fetch customers');
                 const customers = await response.json();
                 
-                customersTableBody.innerHTML = ""; // Clear "Loading..."
+                customersTableBody.innerHTML = ""; 
                 
                 if (customers.length === 0) {
                     customersTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No customers found.</td></tr>';
@@ -107,7 +94,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Handle Customer Form (Create & Update)
         customerForm.addEventListener("submit", async (e) => {
             e.preventDefault();
             
@@ -122,7 +108,6 @@ document.addEventListener("DOMContentLoaded", () => {
             let url = '/api/customer';
             let method = 'POST';
 
-            // If an ID exists, we are UPDATING (PUT), not creating (POST)
             if (customerId) {
                 url = `/api/customer/${customerId}`;
                 method = 'PUT';
@@ -139,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     alert(customerId ? 'Customer updated!' : 'Customer created!');
                     customerForm.reset();
                     closeModal();
-                    loadCustomers(); // Refresh the list
+                    loadCustomers();
                 } else {
                     const errorData = await response.json();
                     alert(`Error: ${errorData.error}`);
@@ -150,14 +135,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // Handle Edit and Delete buttons (Event Delegation)
         customersTableBody.addEventListener('click', async (e) => {
             const target = e.target;
             const customerId = target.getAttribute('data-id');
 
-            if (!customerId) return; // Not a button we care about
+            if (!customerId) return; 
 
-            // Handle DELETE
             if (target.classList.contains('delete-btn')) {
                 if (!confirm('Are you sure you want to delete this customer?')) {
                     return;
@@ -167,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const response = await fetch(`/api/customer/${customerId}`, { method: 'DELETE' });
                     if (response.ok) {
                         alert('Customer deleted.');
-                        loadCustomers(); // Refresh list
+                        loadCustomers();
                     } else {
                         const errorData = await response.json();
                         alert(`Error: ${errorData.error}`);
@@ -178,16 +161,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            // Handle EDIT
             if (target.classList.contains('edit-btn')) {
-                // Fetch the customer's current data
                 try {
                     const response = await fetch(`/api/customer/${customerId}`);
                     if (!response.ok) throw new Error('Customer not found');
                     
                     const customer = await response.json();
                     
-                    // Populate the form
                     modalTitle.textContent = "Edit Customer";
                     customerIdField.value = customerId;
                     document.getElementById("cust-name").value = customer.name;
@@ -195,7 +175,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     document.getElementById("cust-phone").value = customer.phone || '';
                     document.getElementById("cust-company").value = customer.company || '';
                     
-                    // Show the modal
                     modal.style.display = "flex";
                     
                 } catch (err) {
@@ -205,13 +184,11 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        // Initial load of customers on page visit
         loadCustomers();
     }
     
     // --- 4. DASHBOARD PAGE LOGIC ---
     if (window.location.pathname === '/') {
-        // Load customer count
         const statTotalCustomers = document.getElementById('stat-total-customers');
         if (statTotalCustomers) {
             fetch('/api/customers')
@@ -226,8 +203,38 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- 5. UTILITY FUNCTION ---
-    // Simple function to escape HTML to prevent XSS attacks
+    // --- 5. LEAD FORM LOGIC (FROM TEAMMATE) ---
+    // We'll need to create a new page/modal for this form later
+    const leadForm = document.getElementById("lead-form");
+    if (leadForm) {
+        leadForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const leadData = {
+                name: document.getElementById("lead-name").value,
+                email: document.getElementById("lead-email").value,
+                source: document.getElementById("lead-source").value,
+                status: "New" // Default status
+            };
+
+            const response = await fetch('/api/lead', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(leadData)
+            });
+
+            if (response.ok) {
+                alert('New Lead captured!');
+                leadForm.reset();
+            } else {
+                const errorData = await response.json();
+                alert(`Error capturing lead: ${errorData.error || response.statusText}`);
+            }
+        });
+    }
+    // --- END TEAMMATE'S LOGIC ---
+
+
+    // --- 6. UTILITY FUNCTION ---
     function escapeHTML(str) {
         return str.replace(/[&<>"']/g, function(m) {
             return {
