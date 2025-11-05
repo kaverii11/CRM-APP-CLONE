@@ -223,6 +223,31 @@ def convert_lead_to_opportunity(lead_id):
 
     except Exception as e: # pylint: disable=broad-except
         return jsonify({'success': False, 'error': str(e)}), 500
+# app.py (Modified capture_lead function)
+
+@app.route('/api/lead', methods=['POST'])
+def capture_lead():
+    """Captures a new lead from a form submission and stores it."""
+    try:
+        db_conn = get_db()
+        if db_conn is None:
+            return jsonify({"success": False, "error": "Database connection failed"}), 500
+        
+        data = request.json
+        # ... (rest of validation) ...
+        
+        # ... (lead_data creation) ...
+        
+        # Store the lead in a separate 'leads' collection
+        doc_ref = db_conn.collection('leads').document()
+        doc_ref.set(lead_data)
+        
+        return jsonify({'success': True, 'id': doc_ref.id}), 201
+        
+    except Exception as e: # pylint: disable=broad-except
+        # ADDED LINE: Print the exception to the server console
+        print(f"Error in capture_lead: {e}") 
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ... (End of app.py) ...
 
