@@ -39,6 +39,11 @@ def login_page():
     """Renders the login page."""
     return render_template('login.html')
 
+@app.route('/customers')
+def customers_page():
+    """Renders the main customer list page."""
+    return render_template('customers.html')
+
 # --- API Routes (Epic 2: Customer CRUD) ---
 @app.route('/api/customer', methods=['POST'])
 def create_customer():
