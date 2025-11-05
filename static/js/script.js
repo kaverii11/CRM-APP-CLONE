@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ... (Your auth logic) ...
 
     const customerForm = document.getElementById("customer-form");
+    const leadForm = document.getElementById("lead-form"); // NEW
     const ticketCustomerSelect = document.getElementById("ticket-customer");
 
     // Handle Customer Form (Epic 2)
@@ -34,6 +35,34 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+    // Handle Lead Form (Epic 3.1) - NEW BLOCK
+    if (leadForm) {
+        leadForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const leadData = {
+                name: document.getElementById("lead-name").value,
+                email: document.getElementById("lead-email").value,
+                source: document.getElementById("lead-source").value,
+                status: "New" // Default status
+            };
+
+            const response = await fetch('/api/lead', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(leadData)
+            });
+
+            if (response.ok) {
+                alert('New Lead captured!');
+                leadForm.reset();
+            } else {
+                const errorData = await response.json();
+                alert(`Error capturing lead: ${errorData.error || response.statusText}`);
+            }
+        });
+    }
+    // END NEW BLOCK
 
     // Load customers into the dropdown (for Epic 4)
     async function loadCustomers() {
