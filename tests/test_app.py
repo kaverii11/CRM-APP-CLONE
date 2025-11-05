@@ -366,4 +366,68 @@ def test_assign_lead_not_found(client):
         
         assert response.status_code == 404
         assert 'Lead not found' in response.json['error']
+# --- Tests for Epic 3.4: Track opportunity status (Open, Won, Lost) ---
 
+def test_update_opportunity_status_success(client):
+    """Test updating the status of an opportunity to a valid stage."""
+    mock_db = MagicMock()
+    mock_opp_doc = MagicMock()
+    mock_opp_doc.exists = True
+    mock_db.collection.return_value.document.return_value.get.return_value = mock_opp_doc
+    
+    with patch('app.get_db', return_value=mock_db):
+        update_data = {'stage': 'Negotiation'}
+        response = client.put('/api/opportunity/opp-123/status', json=update_data)
+        
+        assert response.status_code == 200
+        assert response.json['success'] is True
+        assert "Negotiation" in response.json['message']
+        
+        # Verify the update call includes the stage and updated timestamp
+        mock_db.collection.return_value.document.return_value.update.assert_called_once_with({
+            'stage': 'Negotiation',
+            'updatedAt': firestore.SERVER_TIMESTAMP 
+        })
+
+def test_update_opportunity_status_won_closure(client):
+    """Test updating the status to 'Won' includes the closedAt timestamp."""
+    mock_db = MagicMock()
+    mock_opp_doc = MagicMock()
+    mock_opp_doc.exists = True
+    mock_db.collection.return_value.document.return_value.get.return_value = mock_opp_doc
+    
+    with patch('app.get_db', return_value=mock_db):
+        update_data = {'stage': 'Won'}
+        client.put('/api/opportunity/opp-123/status', json=update_data)
+        
+        # Verify the update call includes both the stage and closedAt timestamp
+        mock_db.collection.return_value.document.return_value.update.assert_called_once_with({
+            'stage': 'Won',
+            'updatedAt': firestore.SERVER_TIMESTAMP,
+            'closedAt': firestore.SERVER_TIMESTAMP 
+        })
+
+def test_update_opportunity_status_invalid(client):
+    """Test updating the status with an invalid stage fails with 400."""
+    mock_db = MagicMock() 
+    
+    with patch('app.get_db', return_value=mock_db):
+        update_data = {'stage': 'Black Hole'}
+        response = client.put('/api/opportunity/opp-123/status', json=update_data)
+        
+        assert response.status_code == 400
+        assert 'Invalid stage provided' in response.json['error']
+
+def test_update_opportunity_status_not_found(client):
+    """Test updating the status fails if the opportunity is missing."""
+    mock_db = MagicMock()
+    mock_opp_doc = MagicMock()
+    mock_opp_doc.exists = False
+    mock_db.collection.return_value.document.return_value.get.return_value = mock_opp_doc
+    
+    with patch('app.get_db', return_value=mock_db):
+        update_data = {'stage': 'Lost'}
+        response = client.put('/api/opportunity/non-existent-opp/status', json=update_data)
+        
+        assert response.status_code == 404
+        assert 'Opportunity not found' in response.json['error']
