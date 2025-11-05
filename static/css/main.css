@@ -1,0 +1,484 @@
+/* --- 1. Root Variables (Theme) --- */
+:root {
+    /* CHANGED: Using Poppins as the primary font */
+    --font-sans: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    
+    /* Light Mode */
+    --bg-sidebar: #172b4d; /* Fallback color */
+    --bg-primary: #f7f8fc; /* Softer white */
+    --bg-secondary: #ffffff;
+    --text-primary: #172b4d; /* Darker, more professional blue-black */
+    --text-secondary: #5e6c84;
+    --text-on-dark: #ffffff;
+    --border-color: #ebecf0; /* Lighter border */
+    --shadow-color: rgba(23, 43, 77, 0.1); /* Softer shadow */
+    --primary-color: #6c63ff; /* New purple primary */
+    --primary-hover: #524acc;
+    --danger-color: #de350b;
+
+    /* CHANGED: Larger border radius for a softer look */
+    --border-radius: 12px; 
+    --sidebar-width-desktop: 250px;
+    --header-height: 60px;
+}
+
+/* Dark Mode */
+:root.dark-mode {
+    --bg-sidebar: #0e1a2e; /* Fallback color */
+    --bg-primary: #1d1d1d;
+    --bg-secondary: #2a2a2a;
+    --text-primary: #f0f0f0;
+    --text-secondary: #b0b8c5;
+    --text-on-dark: #ffffff;
+    --border-color: #444;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --primary-color: #7b74ff; /* Lighter purple for dark mode */
+    --primary-hover: #928dff;
+    --danger-color: #ff5b5b;
+}
+
+/* --- 2. Global Reset & Body --- */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: var(--font-sans);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 16px;
+    box-sizing: border-box;
+    /* Smoother font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+/* --- 3. Main Layout (Sidebar + Content) --- */
+.sidebar {
+    width: var(--sidebar-width-desktop);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    
+    /* CHANGED: Sunset Gradient */
+    background: linear-gradient(180deg, #fd746c 0%, #ff9068 30%, #ff5e62 100%);
+    color: var(--text-on-dark);
+    
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+}
+
+/* Dark mode sidebar gets a different gradient */
+:root.dark-mode .sidebar {
+    background: linear-gradient(180deg, #434343 0%, #222222 100%);
+}
+
+
+.main-content {
+    margin-left: var(--sidebar-width-desktop);
+    padding-top: var(--header-height);
+    width: calc(100% - var(--sidebar-width-desktop));
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+.main-header {
+    height: var(--header-height);
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width-desktop);
+    width: calc(100% - var(--sidebar-width-desktop));
+    z-index: 900;
+    transition: left 0.3s ease, width 0.3s ease;
+}
+
+.main-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600; /* Bolder header */
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.content-area {
+    padding: 30px;
+}
+
+/* --- 4. Sidebar Content --- */
+.sidebar-header {
+    padding: 0 25px;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    /* Removed border for a cleaner look */
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.sidebar-nav {
+    flex-grow: 1;
+    padding: 15px 0;
+}
+
+.nav-item {
+    display: block;
+    padding: 14px 25px;
+    color: var(--text-on-dark);
+    text-decoration: none;
+    font-weight: 500;
+    border-left: 4px solid transparent; /* Thicker accent */
+    opacity: 0.9;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+.nav-item:hover {
+    background-color: rgba(255,255,255,0.1);
+    opacity: 1;
+}
+
+.nav-item.active {
+    border-left-color: #ffffff; /* White active border */
+    background-color: rgba(255,255,255,0.15);
+    opacity: 1;
+    font-weight: 600;
+}
+
+.sidebar-footer {
+    padding: 20px 25px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+}
+
+.sidebar-footer .nav-item {
+    padding-left: 0;
+    padding-right: 0;
+    border: none;
+}
+
+.theme-btn {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 10px 14px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.theme-btn:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+/* Dark mode theme button */
+:root.dark-mode .theme-btn {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+#mobile-menu-btn {
+    display: none;
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+}
+
+
+/* --- 5. General Components (Buttons, Cards, Forms) --- */
+.btn {
+    padding: 12px 18px; /* Slightly larger */
+    font-size: 0.95rem;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600; /* Bolder buttons */
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+}
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px); /* Add hover effect */
+    box-shadow: 0 6px 16px rgba(108, 99, 255, 0.4);
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: #fff;
+}
+
+.btn-secondary {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+.btn-secondary:hover {
+    background-color: var(--bg-primary);
+    border-color: #aaa;
+}
+
+
+.card {
+    background-color: var(--bg-secondary);
+    
+    /* CHANGED: Removed border, using shadow instead */
+    border: none; 
+    border-radius: var(--border-radius);
+    padding: 25px; /* More padding */
+    
+    /* CHANGED: Updated shadow */
+    box-shadow: 0 4px 12px var(--shadow-color);
+    margin-bottom: 25px;
+    
+    /* CHANGED: Add hover effect */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px var(--shadow-color);
+}
+
+.card h3 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px; /* More padding */
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px; /* More space */
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* Slightly less rounded than card */
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: var(--font-sans);
+}
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+}
+.form-actions {
+    text-align: right;
+    margin-top: 25px;
+}
+
+/* --- 6. Page-Specific Styles --- */
+
+/* Dashboard Grids */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-bottom: 25px;
+}
+.stat-card h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+.stat-card p {
+    font-size: 2.5rem;
+    font-weight: 700; /* Bolder stat number */
+    margin: 10px 0 0;
+    color: var(--primary-color);
+}
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+/* Quick Actions list */
+#recent-activity-list {
+    list-style: none;
+    padding-left: 0;
+}
+#recent-activity-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.95rem;
+}
+#recent-activity-list li:last-child {
+    border-bottom: none;
+}
+
+
+/* Customers Page */
+.page-actions {
+    margin-bottom: 20px;
+    text-align: right;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+#customers-table {
+    width: 100%;
+    border-collapse: collapse;
+    /* CHANGED: Remove cell borders for a cleaner look */
+}
+
+#customers-table th,
+#customers-table td {
+    padding: 16px 15px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+    white-space: nowrap;
+    font-size: 0.95rem;
+}
+
+#customers-table th {
+    background-color: var(--bg-primary);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Table row hover */
+#customers-table tbody tr:hover {
+    background-color: var(--bg-primary);
+}
+
+#customers-table .action-btn {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-right: 5px;
+    border-radius: 8px;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    /* Add a little animation */
+    transform: scale(0.95);
+    animation: modal-pop 0.2s ease forwards;
+}
+
+@keyframes modal-pop {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    font-weight: 400;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+
+/* --- 7. Responsive Styles (Mobile) --- */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        z-index: 3000;
+    }
+    
+    body.sidebar-open .sidebar {
+        transform: translateX(0);
+    }
+
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .main-header {
+        left: 0;
+        width: 100%;
+    }
+    
+    #mobile-menu-btn {
+        display: block;
+    }
+    
+    .content-area {
+        padding: 15px;
+    }
+    
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}

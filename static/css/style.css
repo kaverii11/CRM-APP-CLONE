@@ -81,13 +81,23 @@ button:hover {
     background-color: #003e99;
 }
 .login-box {
-    width: 300px;
-    margin: 100px auto;
+    /* We set a max-width for desktop, but let it shrink */
+    max-width: 350px; 
+    
+    /* On small screens, it will be 90% of the screen width */
+    width: 90%;
+    
+    /* Use 10% of the viewport height for the top/bottom margin */
+    margin: 10vh auto; 
+    
     padding: 30px;
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 5px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    
+    /* This ensures padding doesn't add to the width */
+    box-sizing: border-box; 
 }
 .error {
     color: #de350b;
@@ -102,4 +112,38 @@ button:hover {
 #ticket-list li strong {
     display: block;
     font-size: 1.1rem;
+}
+/* --- Responsive Styles (Epic 10) --- */
+
+/* On screens 768px wide or less (tablets and phones) */
+@media (max-width: 768px) {
+    
+    .grid {
+        /* Change the 2-column grid to a 1-column grid */
+        grid-template-columns: 1fr;
+    }
+    
+    header {
+        /* Stack the header items for a better mobile layout */
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px 20px; /* Adjust padding for mobile */
+    }
+
+    header h1 {
+        margin-bottom: 10px; /* Add spacing below title */
+    }
+}
+
+/* On very small screens (phones) */
+@media (max-width: 480px) {
+    .container {
+        /* Reduce padding on the sides for more content space */
+        padding: 0 10px;
+    }
+
+    .card {
+        /* Reduce card padding slightly */
+        padding: 15px;
+    }
 }
