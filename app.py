@@ -25,7 +25,6 @@ def get_db():
             print("FATAL ERROR: serviceAccountKey.json not found in runtime.")
             # Return None to signal a failure
             return None
-            
         db = firestore.client()
     return db
 
@@ -48,7 +47,6 @@ def create_customer():
         db_conn = get_db()
         if db_conn is None:
             return jsonify({"error": "Database connection failed"}), 500
-        
         data = request.json
         if not data.get('name') or not data.get('email'):
             return jsonify({"error": "Name and email are required"}), 400
@@ -74,7 +72,6 @@ def get_customers():
         db_conn = get_db()
         if db_conn is None:
             return jsonify({"error": "Database connection failed"}), 500
-        
         customers = []
         docs = db_conn.collection('customers').stream()
         for doc in docs:
@@ -84,6 +81,22 @@ def get_customers():
         return jsonify(customers), 200
     except Exception as e: # pylint: disable=broad-except
         return jsonify({"error": str(e)}), 500
+# Add this new route to app.py
 
+@app.route('/api/customer/<string:customer_id>', methods=['GET'])
+def get_customer_details(customer_id):
+    """Gets a single customer's details by their ID."""
+    try:
+        db_conn = get_db()
+        if db_conn is None:
+            return jsonify({"error": "Database connection failed"}), 500
+        customer_ref = db_conn.collection('customers').document(customer_id)
+        customer = customer_ref.get()
+        if not customer.exists:
+            return jsonify({"error": "Customer not found"}), 404
+        return jsonify(customer.to_dict()), 200
+
+    except Exception as e: # pylint: disable=broad-except
+        return jsonify({"error": str(e)}), 500
 if __name__ == '__main__':
     app.run()

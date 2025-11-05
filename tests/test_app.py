@@ -105,3 +105,36 @@ def test_get_db_file_not_found_error(client):
         # The app should now correctly return a 500 error
         assert response.status_code == 500
         assert "Database connection failed" in response.json['error']
+
+# Add these new tests to the end of tests/test_app.py
+
+def test_get_customer_details_success(client):
+    """Test getting a single customer's details."""
+    mock_db = MagicMock()
+    mock_doc = MagicMock()
+    mock_doc.exists = True
+    mock_doc.to_dict.return_value = {"name": "Test User", "email": "test@example.com"}
+    
+    # This line mocks the .get() call
+    mock_db.collection.return_value.document.return_value.get.return_value = mock_doc
+    
+    with patch('app.get_db', return_value=mock_db):
+        response = client.get('/api/customer/some-id')
+        
+        assert response.status_code == 200
+        assert response.json['name'] == "Test User"
+
+def test_get_customer_details_not_found(client):
+    """Test getting a customer that does not exist."""
+    mock_db = MagicMock()
+    mock_doc = MagicMock()
+    mock_doc.exists = False # Simulate a customer not being found
+    
+    mock_db.collection.return_value.document.return_value.get.return_value = mock_doc
+    
+    with patch('app.get_db', return_value=mock_db):
+        response = client.get('/api/customer/some-id')
+        
+        assert response.status_code == 404
+        assert "Customer not found" in response.json['error']
+        
