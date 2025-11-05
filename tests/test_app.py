@@ -1,15 +1,9 @@
-import os
-import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import werkzeug
-if not hasattr(werkzeug, '__version__'):
-    werkzeug.__version__ = '3.0.0'
-
 import json
 import pytest
 from app import app
 from unittest.mock import MagicMock, patch
-
+from firebase_admin import firestore
+# Initialize Flask App
 @pytest.fixture
 def client():
     app.config['TESTING'] = True
@@ -226,17 +220,27 @@ def test_capture_lead_success(client):
     mock_db = MagicMock()
     mock_ref = MagicMock()
     mock_ref.id = "new-lead-456"
-    mock_db.collection.return_value.document.return_value = mock_ref
+    # Note: Use document().set() in app.py, so we mock the doc reference
+    mock_db.collection.return_value.document.return_value = mock_ref 
 
     with patch('app.get_db', return_value=mock_db):
         lead_data = {'name': 'Test Lead', 'email': 'lead@example.com', 'source': 'Web Form'}
         response = client.post('/api/lead', json=lead_data)
 
         assert response.status_code == 201
-        json_data = response.get_json()
-        assert json_data['success'] is True
-        assert json_data['id'] == "new-lead-456"
-
+        assert response.json['success'] is True
+        assert response.json['id'] == "new-lead-456"
+        
+def test_capture_lead_missing_data(client):
+    """Test the capture_lead function fails validation."""
+    mock_db = MagicMock()
+    with patch('app.get_db', return_value=mock_db):
+        # Missing 'source'
+        lead_data = {'name': 'Test Lead', 'email': 'lead@example.com'}
+        response = client.post('/api/lead', json=lead_data)
+    
+        assert response.status_code == 400
+        assert 'Name, email, and source are required' in response.json['error']
 
 def test_capture_lead_500_error(client):
     """Test the capture_lead function for a generic 500 error."""
@@ -248,3 +252,70 @@ def test_capture_lead_500_error(client):
         
         assert response.status_code == 500
         assert "Simulated lead database crash" in response.json['error']
+# --- Tests for Epic 3.2: Convert lead to opportunity ---
+
+def test_convert_lead_success(client):
+    """Test the convert_lead_to_opportunity function succeeds."""
+    # Use from unittest.mock import MagicMock, patch if needed here, but it's already imported at the top
+    mock_db = MagicMock()
+
+    # Mock the existing lead document
+    mock_lead_doc = MagicMock()
+    mock_lead_doc.exists = True
+    mock_lead_doc.to_dict.return_value = {
+        'name': 'Convert Lead',
+        'email': 'convert@example.com',
+        'source': 'Web Form',
+        'status': 'New'
+    }
+
+    # Mock Firestore document references
+    lead_ref_mock = MagicMock(id='lead-to-convert', get=lambda: mock_lead_doc, update=MagicMock())
+    opp_ref_mock = MagicMock(id='new-opp-789', set=MagicMock())
+
+    # Simulate multiple .document() calls dynamically
+    def document_side_effect(doc_id=None):
+        if doc_id == 'lead-to-convert':
+            return lead_ref_mock
+        else:
+            return opp_ref_mock
+
+    mock_db.collection.return_value.document.side_effect = document_side_effect
+
+    with patch('app.get_db', return_value=mock_db):
+        response = client.post('/api/lead/lead-to-convert/convert')
+
+        assert response.status_code == 200
+        assert response.json['success'] is True
+        assert "converted" in response.json['message']
+        assert response.json['opportunity_id'] == "new-opp-789"
+
+        # Verify the lead was updated with the correct fields
+        lead_ref_mock.update.assert_called_once_with({
+            'status': 'Converted',
+            'convertedAt': firestore.SERVER_TIMESTAMP 
+        })
+        opp_ref_mock.set.assert_called_once()
+
+
+def test_convert_lead_not_found(client):
+    """Test the convert_lead_to_opportunity function fails if lead is missing."""
+    mock_db = MagicMock()
+    mock_lead_doc = MagicMock()
+    mock_lead_doc.exists = False
+    mock_db.collection.return_value.document.return_value.get.return_value = mock_lead_doc
+    
+    with patch('app.get_db', return_value=mock_db):
+        response = client.post('/api/lead/non-existent-lead/convert')
+        
+        assert response.status_code == 404
+        assert 'Lead not found' in response.json['error']
+
+def test_convert_lead_500_error(client):
+    """Test the convert_lead_to_opportunity function for a generic 500 error."""
+    with patch('app.get_db', side_effect=Exception("Simulated conversion crash")):
+        response = client.post('/api/lead/any-id/convert')
+        
+        assert response.status_code == 500
+        assert "Simulated conversion crash" in response.json['error']
+# --- Tests for Epic 3.3: Assign lead to sales rep ---

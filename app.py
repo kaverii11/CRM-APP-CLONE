@@ -177,6 +177,52 @@ def capture_lead():
         
     except Exception as e: # pylint: disable=broad-except
         return jsonify({'success': False, 'error': str(e)}), 500
+# ... (Previous code including capture_lead function) ...
 
-if __name__ == '__main__':
-    app.run()
+# --- API Route (NEW - Epic 3.2: Convert lead to opportunity) ---
+@app.route('/api/lead/<string:lead_id>/convert', methods=['POST'])
+def convert_lead_to_opportunity(lead_id):
+    """Converts an existing lead into a sales opportunity."""
+    try:
+        db_conn = get_db()
+        if db_conn is None:
+            return jsonify({"success": False, "error": "Database connection failed"}), 500
+
+        lead_ref = db_conn.collection('leads').document(lead_id)
+        lead_doc = lead_ref.get()
+
+        if not lead_doc.exists:
+            return jsonify({"error": "Lead not found"}), 404
+        
+        lead_data = lead_doc.to_dict()
+
+        # 1. Update Lead Status
+        lead_ref.update({
+            'status': 'Converted',
+            'convertedAt': firestore.SERVER_TIMESTAMP # pylint: disable=no-member
+        })
+
+        # 2. Create Opportunity Record (for tracking pipeline)
+        opportunity_data = {
+            'lead_id': lead_id,
+            'name': lead_data.get('name'),
+            'email': lead_data.get('email'),
+            'source': lead_data.get('source'),
+            'stage': 'Qualification', # Initial stage
+            'amount': 0.0, # Placeholder for potential deal size
+            'createdAt': firestore.SERVER_TIMESTAMP # pylint: disable=no-member
+        }
+        opportunity_ref = db_conn.collection('opportunities').document()
+        opportunity_ref.set(opportunity_data)
+
+        return jsonify({
+            "success": True, 
+            "message": f"Lead {lead_id} converted to Opportunity.",
+            "opportunity_id": opportunity_ref.id
+        }), 200
+
+    except Exception as e: # pylint: disable=broad-except
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ... (End of app.py) ...
+# ... (after convert_lead_to_opportunity) ...

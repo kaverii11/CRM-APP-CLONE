@@ -9,3 +9,4 @@ __pycache__/
 .env
 *.log
 serviceAccountKey.json
+echo ".coverage" >> .gitignore
