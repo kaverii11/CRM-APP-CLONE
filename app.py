@@ -127,5 +127,26 @@ def update_customer_details(customer_id):
 
     except Exception as e: # pylint: disable=broad-except
         return jsonify({"error": str(e)}), 500
+    
+# Add this new route to app.py
+
+@app.route('/api/customer/<string:customer_id>', methods=['DELETE'])
+def delete_customer(customer_id):
+    """Deletes a customer by their ID."""
+    try:
+        db_conn = get_db()
+        if db_conn is None:
+            return jsonify({"error": "Database connection failed"}), 500
+
+        customer_ref = db_conn.collection('customers').document(customer_id)
+        # Check if customer exists before trying to delete
+        if not customer_ref.get().exists:
+            return jsonify({"error": "Customer not found"}), 404
+        # Delete the customer document
+        customer_ref.delete()
+        return jsonify({"success": True, "id": customer_id}), 200
+
+    except Exception as e: # pylint: disable=broad-except
+        return jsonify({"error": str(e)}), 500
 if __name__ == '__main__':
     app.run()

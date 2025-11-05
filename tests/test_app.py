@@ -181,3 +181,34 @@ def test_update_customer_bad_request(client):
         
         assert response.status_code == 400
         assert "No update data provided" in response.json['error']
+
+# Add these new tests to the end of tests/test_app.py
+
+def test_delete_customer_success(client):
+    """Test deleting a customer successfully."""
+    mock_db = MagicMock()
+    mock_doc = MagicMock()
+    mock_doc.exists = True # Make the document exist
+    
+    # Mock the .get() call
+    mock_db.collection.return_value.document.return_value.get.return_value = mock_doc
+    
+    with patch('app.get_db', return_value=mock_db):
+        response = client.delete('/api/customer/some-id')
+        
+        assert response.status_code == 200
+        assert response.json['success'] is True
+
+def test_delete_customer_not_found(client):
+    """Test deleting a customer that does not exist."""
+    mock_db = MagicMock()
+    mock_doc = MagicMock()
+    mock_doc.exists = False # Make the document NOT exist
+    
+    mock_db.collection.return_value.document.return_value.get.return_value = mock_doc
+    
+    with patch('app.get_db', return_value=mock_db):
+        response = client.delete('/api/customer/some-id')
+        
+        assert response.status_code == 404
+        assert "Customer not found" in response.json['error']
