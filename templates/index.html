@@ -1,79 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>CRM Dashboard</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-</head>
-<body>
-    <header>
-        <h1>CRM Dashboard</h1>
-    </header>
-    <main class="container">
-        <div class="grid">
-            <section class="card">
-                <h3>Create New Customer (Epic 2)</h3>
-                <form id="customer-form">
-                    <div class="form-group">
-                        <label for="cust-name">Name</label>
-                        <input type="text" id="cust-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="cust-email">Email</label>
-                        <input type="email" id="cust-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="cust-phone">Phone</label>
-                        <input type="tel" id="cust-phone">
-                    </div>
-                    <button type="submit">Create Customer</button>
-                </form>
-            </section>
+{% extends "layout.html" %}
 
-            <section class="card">
-                <h3>Capture New Lead (Epic 3)</h3>
-                <form id="lead-form">
-                    <div class="form-group">
-                        <label for="lead-name">Name</label>
-                        <input type="text" id="lead-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="lead-email">Email</label>
-                        <input type="email" id="lead-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="lead-source">Source</label>
-                        <select id="lead-source" required>
-                            <option value="">Select source...</option>
-                            <option value="Web Form">Web Form</option>
-                            <option value="Referral">Referral</option>
-                            <option value="Advertisement">Advertisement</option>
-                        </select>
-                    </div>
-                    <button type="submit">Capture Lead</button>
-                </form>
-            </section>
-            
-            <section class="card">
-                <h3>Create Support Ticket (Epic 4)</h3>
-                <form id="ticket-form">
-                    <div class="form-group">
-                        <label for="ticket-customer">Customer</label>
-                        <select id="ticket-customer" required>
-                            <option value="">Loading customers...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="ticket-subject">Subject</label>
-                        <input type="text" id="ticket-subject" disabled>
-                    </div>
-                    <button type="submit" disabled>Create Ticket</button>
-                </form>
-            </section>
+{% block title %}Dashboard - CRM Pro{% endblock %}
+
+{% block page_header %}Dashboard Overview{% endblock %}
+
+{% block content %}
+    <div class="stat-grid">
+        <div class="card stat-card">
+            <h3>Total Customers</h3>
+            <p id="stat-total-customers">0</p>
         </div>
-    </main>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="/static/js/script.js"></script>
-</body>
-</html>
+        <div class="card stat-card">
+            <h3>Open Tickets</h3>
+            <p id="stat-open-tickets">0</p>
+        </div>
+        <div classs="card stat-card">
+            <h3>New Leads (Example)</h3>
+            <p id="stat-new-leads">0</p>
+        </div>
+    </div>
+
+    <div class="grid">
+        <section class="card">
+            <h3>Quick Actions</h3>
+            <a href="/customers" class="btn">Manage Customers</a>
+            <button class="btn">Create Ticket</button>
+        </section>
+
+        <section class="card">
+            <h3>Recent Activity</h3>
+            <ul id="recent-activity-list">
+                <li>No recent activity.</li>
+            </ul>
+        </section>
+    </div>
+{% endblock %}
