@@ -1,5 +1,6 @@
 """Main Flask application for the CRM."""
 import firebase_admin
+from datetime import datetime, timedelta, timezone
 from firebase_admin import credentials, firestore
 from flask import Flask, request, jsonify, render_template
 
@@ -318,5 +319,39 @@ def update_opportunity_status(opportunity_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 # ... (End of app.py) ...
 # ... (after convert_lead_to_opportunity) ...
+
+@app.route('/api/tickets', methods=['POST'])
+def create_support_ticket():
+    """
+    Logs a new support ticket from a customer.
+    Corresponds to Story CCRM-63.
+    """
+    data = request.get_json()
+
+    # Basic validation
+    if not data or 'customer_id' not in data or 'issue' not in data:
+        return jsonify({"error": "Missing required fields: customer_id, issue"}), 400
+
+    # Business logic for the SupportCaseManager
+    # In a real app, this would be in a separate 'services' module.
+    now_utc = datetime.now(timezone.utc)
+    new_ticket = {
+        "ticket_id": f"TKT-{now_utc.strftime('%Y%m%d%H%M%S')}",
+        "customer_id": data['customer_id'],
+        "issue": data['issue'],
+        "status": "Open",
+        "priority": data.get("priority", "Medium"), # Default priority
+        "created_at": now_utc.isoformat(),
+        "sla_deadline": (now_utc + timedelta(hours=24)).isoformat() # Story CCRM-695
+    }
+
+    # Here you would save new_ticket to the database
+    # db.tickets.insert_one(new_ticket)
+
+    print(f"New support ticket created: {new_ticket['ticket_id']}")
+
+    return jsonify(new_ticket), 201
+
+
 if __name__ == "__main__":
     app.run()
