@@ -3,6 +3,7 @@ import logging
 import sys
 from datetime import datetime, timedelta, timezone
 import firebase_admin
+from datetime import datetime, timedelta, timezone
 from firebase_admin import credentials, firestore
 from flask import Flask, request, jsonify, render_template
 
@@ -242,131 +243,62 @@ def convert_lead_to_opportunity(lead_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 # app.py (Modified capture_lead function)
 
-
-@app.route('/api/lead/<string:lead_id>/assign', methods=['PUT'])
-def assign_lead(lead_id):
-    """Assigns an existing lead to a specified sales representative."""
-    try:
-        db_conn = get_db()
-        if db_conn is None:
-            return jsonify({"success": False, "error": "Database connection failed"}), 500
-
-        data = request.json
-        rep_id = data.get('rep_id')
-        rep_name = data.get('rep_name', 'Unspecified')
-
-        if not rep_id:
-            return jsonify({"error": "Sales rep ID (rep_id) is required for assignment"}), 400
-
-        lead_ref = db_conn.collection('leads').document(lead_id)
-        
-        # Check if the lead exists
-        if not lead_ref.get().exists:
-            return jsonify({"error": "Lead not found"}), 404
-        
-        # Update the lead document
-        lead_ref.update({
-            'assigned_to_id': rep_id,
-            'assigned_to_name': rep_name,
-            'assignedAt': firestore.SERVER_TIMESTAMP # pylint: disable=no-member
-        })
-
-        return jsonify({
-            "success": True, 
-            "message": f"Lead {lead_id} assigned to {rep_name} ({rep_id})"
-        }), 200
-
-    except Exception as e: # pylint: disable=broad-except
-        logger.exception("Error in assign_lead: %s", e)
-        return jsonify({'success': False, 'error': str(e)}), 500
-# --- API Route (NEW - Epic 3.4: Track opportunity status) ---
-@app.route('/api/opportunity/<string:opportunity_id>/status', methods=['PUT'])
-def update_opportunity_status(opportunity_id):
-    """Updates the stage/status of an existing sales opportunity."""
-    ALLOWED_STAGES = ['Qualification', 'Proposal', 'Negotiation', 'Won', 'Lost']
-
-    try:
-        db_conn = get_db()
-        if db_conn is None:
-            return jsonify({"success": False, "error": "Database connection failed"}), 500
-
-        data = request.json
-        new_stage = data.get('stage')
-
-        if not new_stage:
-            return jsonify({"error": "Stage is required in the request body"}), 400
-        
-        if new_stage not in ALLOWED_STAGES:
-            return jsonify({
-                "error": "Invalid stage provided.",
-                "valid_stages": ALLOWED_STAGES
-            }), 400
-
-        opportunity_ref = db_conn.collection('opportunities').document(opportunity_id)
-        
-        # Check if the opportunity exists
-        if not opportunity_ref.get().exists:
-            return jsonify({"error": "Opportunity not found"}), 404
-        
-        # Update the stage
-        update_data = {
-            'stage': new_stage,
-            'updatedAt': firestore.SERVER_TIMESTAMP # pylint: disable=no-member
-        }
-        
-        # If the stage is 'Won' or 'Lost', record the completion timestamp
-        if new_stage in ['Won', 'Lost']:
-            update_data['closedAt'] = firestore.SERVER_TIMESTAMP # pylint: disable=no-member
-        
-        opportunity_ref.update(update_data)
-
-        return jsonify({
-            "success": True, 
-            "message": f"Opportunity {opportunity_id} status updated to {new_stage}"
-        }), 200
-
-    except Exception as e: # pylint: disable=broad-except
-        logger.exception("Error in update_opportunity_status: %s", e)
-        return jsonify({'success': False, 'error': str(e)}), 500
-# ... (End of app.py) ...
-# ... (after convert_lead_to_opportunity) ...
-
-
+# ... (all your existing imports like Flask, logger, datetime, firestore, etc.)
 @app.route('/api/tickets', methods=['POST'])
 def create_support_ticket():
     """
     Logs a new support ticket from a customer.
     Corresponds to Story CCRM-63.
     """
-    data = request.get_json()
+    try:
+        db_conn = get_db()
+        if db_conn is None:
+            return jsonify({"error": "Database connection failed"}), 500
+        data = request.get_json()
 
-    # Basic validation
-    if not data or 'customer_id' not in data or 'issue' not in data:
-        customer_for_log = data.get('customer_id', 'Unknown') if isinstance(data, dict) else 'Unknown'
-        logger.warning(
-            "Failed ticket creation: Missing required fields. Customer: %s",
-            customer_for_log
+        # Basic validation
+        if not data or 'customer_id' not in data or 'issue' not in data:
+            customer_for_log = data.get('customer_id', 'Unknown') if isinstance(data, dict) else 'Unknown'
+            logger.warning(
+                "Failed ticket creation: Missing required fields. Customer: %s",
+                customer_for_log
+            )
+            return jsonify({"error": "Missing required fields: customer_id, issue"}), 400
+
+        now_utc = datetime.now(timezone.utc)
+        ticket_data = {
+            "customer_id": data['customer_id'],
+            "issue": data['issue'],
+            "status": "Open",
+            "priority": data.get("priority", "Medium"), # Default priority
+            "created_at": firestore.SERVER_TIMESTAMP, # Use Firestore server timestamp
+            "sla_deadline": (now_utc + timedelta(hours=24)).isoformat() # Story CCRM-695
+        }
+
+        # Create ticket document
+        ticket_ref = db_conn.collection('tickets').document()
+        ticket_ref.set(ticket_data)
+
+        logger.info(
+            "New support ticket created. TicketID: %s, CustomerID: %s",
+            ticket_ref.id,
+            ticket_data['customer_id']
         )
-        return jsonify({"error": "Missing required fields: customer_id, issue"}), 400
 
-    now_utc = datetime.now(timezone.utc)
-    new_ticket = {
-        "ticket_id": f"TKT-{now_utc.strftime('%Y%m%d%H%M%S')}",
-        "customer_id": data['customer_id'],
-        "issue": data['issue'],
-        "status": "Open",
-        "priority": data.get("priority", "Medium"), # Default priority
-        "created_at": now_utc.isoformat(),
-        "sla_deadline": (now_utc + timedelta(hours=24)).isoformat() # Story CCRM-695
-    }
-
-    logger.info(
-        "New support ticket created. TicketID: %s, CustomerID: %s",
-        new_ticket['ticket_id'],
-        new_ticket['customer_id']
-    )
-
-    return jsonify(new_ticket), 201
+        # Return ticket info including generated ID
+        response_ticket = {
+            "ticket_id": ticket_ref.id,
+            "customer_id": ticket_data['customer_id'],
+            "issue": ticket_data['issue'],
+            "status": ticket_data['status'],
+            "priority": ticket_data['priority'],
+            "created_at": now_utc.isoformat(), # For immediate feedback; actual in DB is server timestamp
+            "sla_deadline": ticket_data['sla_deadline']
+        }
+        return jsonify(response_ticket), 201
+    except Exception as e: # pylint: disable=broad-except
+        logger.error("Error creating support ticket: %s", str(e))
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
