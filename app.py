@@ -1,7 +1,19 @@
 """Main Flask application for the CRM."""
+import logging
+import sys
+from datetime import datetime, timedelta, timezone
 import firebase_admin
 from firebase_admin import credentials, firestore
 from flask import Flask, request, jsonify, render_template
+
+# --- Logging Configuration ---
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+
+logger = logging.getLogger(__name__)
 
 # Initialize Flask App
 app = Flask(__name__)
@@ -18,11 +30,11 @@ def get_db():
         try:
             cred = credentials.Certificate('serviceAccountKey.json')
             firebase_admin.initialize_app(cred)
-            print("Firebase Admin SDK initialized successfully.")
+            logger.info("Firebase Admin SDK initialized successfully.")
         except ValueError:
-            print("Firebase Admin SDK already initialized.")
+            logger.info("Firebase Admin SDK already initialized.")
         except FileNotFoundError:
-            print("FATAL ERROR: serviceAccountKey.json not found in runtime.")
+            logger.error("FATAL ERROR: serviceAccountKey.json not found in runtime.")
             # Return None to signal a failure
             return None
         db = firestore.client()
@@ -265,7 +277,7 @@ def assign_lead(lead_id):
         }), 200
 
     except Exception as e: # pylint: disable=broad-except
-        print(f"Error in assign_lead: {e}") # Debugging line
+        logger.exception("Error in assign_lead: %s", e)
         return jsonify({'success': False, 'error': str(e)}), 500
 # --- API Route (NEW - Epic 3.4: Track opportunity status) ---
 @app.route('/api/opportunity/<string:opportunity_id>/status', methods=['PUT'])
@@ -314,9 +326,48 @@ def update_opportunity_status(opportunity_id):
         }), 200
 
     except Exception as e: # pylint: disable=broad-except
-        print(f"Error in update_opportunity_status: {e}") # Debugging line
+        logger.exception("Error in update_opportunity_status: %s", e)
         return jsonify({'success': False, 'error': str(e)}), 500
 # ... (End of app.py) ...
 # ... (after convert_lead_to_opportunity) ...
+
+
+@app.route('/api/tickets', methods=['POST'])
+def create_support_ticket():
+    """
+    Logs a new support ticket from a customer.
+    Corresponds to Story CCRM-63.
+    """
+    data = request.get_json()
+
+    # Basic validation
+    if not data or 'customer_id' not in data or 'issue' not in data:
+        customer_for_log = data.get('customer_id', 'Unknown') if isinstance(data, dict) else 'Unknown'
+        logger.warning(
+            "Failed ticket creation: Missing required fields. Customer: %s",
+            customer_for_log
+        )
+        return jsonify({"error": "Missing required fields: customer_id, issue"}), 400
+
+    now_utc = datetime.now(timezone.utc)
+    new_ticket = {
+        "ticket_id": f"TKT-{now_utc.strftime('%Y%m%d%H%M%S')}",
+        "customer_id": data['customer_id'],
+        "issue": data['issue'],
+        "status": "Open",
+        "priority": data.get("priority", "Medium"), # Default priority
+        "created_at": now_utc.isoformat(),
+        "sla_deadline": (now_utc + timedelta(hours=24)).isoformat() # Story CCRM-695
+    }
+
+    logger.info(
+        "New support ticket created. TicketID: %s, CustomerID: %s",
+        new_ticket['ticket_id'],
+        new_ticket['customer_id']
+    )
+
+    return jsonify(new_ticket), 201
+
+
 if __name__ == "__main__":
     app.run()
