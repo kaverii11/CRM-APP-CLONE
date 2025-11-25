@@ -14,11 +14,6 @@
 - [Key Features](#-key-features)
 - [System Architecture](#-system-architecture)
 - [Technology Stack](#-technology-stack)
-- [API Documentation](#-api-documentation)
-- [Security & Compliance](#-security--compliance)
-- [Testing Strategy](#-testing-strategy)
-- [Team Kryptonite](#-team-kryptonite)
-
 ---
 
 ## 📄 Project Overview
