@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPI Performance Report</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        body {
+            background-color: white; /* Ensure white background for printing */
+            margin: 40px;
+        }
+        /* Hide sidebar and header for print view */
+        .sidebar, .main-header { display: none !important; }
+        
+        /* Reset main content area to full width */
+        .main-content { margin-left: 0 !important; width: 100% !important; padding-top: 0 !important; }
+        .content-area { padding: 0; }
+        
+        /* Report specific styles */
+        .report-header { border-bottom: 2px solid #ccc; padding-bottom: 20px; margin-bottom: 30px; }
+        .report-header h1 { color: #172b4d; font-size: 2rem; }
+        
+        /* Stats Grid for Report */
+        .stat-report-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 columns for density */
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .stat-card { box-shadow: none; border: 1px solid #eee; padding: 15px; }
+        
+        .chart-container { width: 100%; height: 350px; }
+        
+        /* Print media query for final cleanup */
+        @media print {
+            body { margin: 0; }
+            .card { border: 1px solid #000; break-inside: avoid; } /* Ensure cards don't break across pages */
+            .btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <main class="content-area">
+            <div class="report-header">
+                <h1>CRM Performance Report</h1>
+                <p>Generated on: <span id="report-date">Loading...</span></p>
+                <button class="btn btn-secondary" onclick="window.print()">Print / Export PDF</button>
+            </div>
+
+            <h2>Key Performance Indicators (KPIs)</h2>
+            <div id="kpi-stats-container" class="stat-report-grid">
+                <p>Loading KPIs...</p>
+            </div>
+
+            <h2>Resolution Trend</h2>
+            <div class="card">
+                <div class="chart-container">
+                    <canvas id="report-resolution-chart"></canvas>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+    <script src="{{ url_for('static', filename='js/report.js') }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+{% extends "layout.html" %}
+
+{% block title %}Customers - CRM Pro{% endblock %}
+
+{% block page_header %}Customer Management{% endblock %}
+
+{% block content %}
+    <div class="page-actions">
+        <button id="add-customer-btn" class="btn btn-primary">Add New Customer</button>
+    </div>
+
+    <div class="card">
+        <h3>All Customers</h3>
+        <div class="table-container">
+            <table id="customers-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Company</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="customers-table-body">
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px;">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Loyalty Test Panel</h3>
+
+        <form id="loyalty-profile-form" class="loyalty-form">
+            <h4>Check Loyalty Profile</h4>
+            <div class="form-group">
+                <label for="loyalty-profile-customer">Customer ID</label>
+                <input type="text" id="loyalty-profile-customer" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Get Profile</button>
+        </form>
+
+        <form id="loyalty-purchase-form" class="loyalty-form">
+            <h4>Simulate Purchase (Add Points)</h4>
+            <div class="form-group">
+                <label for="purchase-customer">Customer ID</label>
+                <input type="text" id="purchase-customer" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="purchase-amount">Amount</label>
+                <input type="number" step="1" min="1" id="purchase-amount" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Simulate Purchase</button>
+        </form>
+
+        <form id="loyalty-redeem-form" class="loyalty-form">
+            <h4>Redeem Points</h4>
+            <div class="form-group">
+                <label for="redeem-customer">Customer ID</label>
+                <input type="text" id="redeem-customer" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="redeem-points">Points to Redeem</label>
+                <input type="number" step="1" min="1" id="redeem-points" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Redeem</button>
+        </form>
+
+        <form id="loyalty-referral-form" class="loyalty-form">
+            <h4>Use Referral Code</h4>
+            <div class="form-group">
+                <label for="referral-customer">New Customer ID</label>
+                <input type="text" id="referral-customer" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="referral-code">Referral Code</label>
+                <input type="text" id="referral-code" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Apply Referral</button>
+        </form>
+
+        <div id="loyalty-output" class="loyalty-output">
+            <em>Results will appear here.</em>
+        </div>
+    </div>
+
+    <!-- customers.html (Insert this code after line 105: </div>, which closes the Loyalty card) -->
+
+<div class="card" style="margin-top: 25px;">
+    <h3>Payment Gateway Test Panel</h3>
+
+    <div id="payment-output" class="loyalty-output" style="margin-bottom: 20px;">
+        <em>Transaction results will appear here.</em>
+    </div>
+
+    <form id="payment-form" class="loyalty-form">
+        <h4>Simulate New Payment</h4>
+        <div class="form-group">
+            <label for="pay-customer">Customer ID</label>
+            <input type="text" id="pay-customer" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="pay-amount">Amount</label>
+            <input type="number" step="0.01" min="1" id="pay-amount" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="pay-method">Payment Method</label>
+            <select id="pay-method" class="form-control">
+                <option value="UPI">UPI</option>
+                <option value="Card">Card</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="card-group" style="display: none;">
+            <label for="pay-card">Card Number (Optional Test Fail: 4000000000000001)</label>
+            <input type="text" id="pay-card" class="form-control" placeholder="Optional: Enter 4000...001 to simulate decline">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Process Payment</button>
+    </form>
+</div>
+
+
+    <div id="customer-modal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Add New Customer</h3>
+                <button id="modal-close-btn" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="customer-form">
+                    <input type="hidden" id="customer-id">
+
+                    <div class="form-group">
+                        <label for="cust-name">Name</label>
+                        <input type="text" id="cust-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-email">Email</label>
+                        <input type="email" id="cust-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-phone">Phone</label>
+                        <input type="tel" id="cust-phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="cust-company">Company</label>
+                        <input type="text" id="cust-company">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Save Customer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

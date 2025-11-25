@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+{% block title %}Sales Dashboard{% endblock %}
+{% block page_header %}Sales Performance Dashboard{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h3>Sales KPIs</h3>
+  <div class="stat-grid">
+    <div class="stat-card">
+      <h3>Total Opportunities</h3>
+      <p id="stat-total-opportunities">Loading...</p>
+    </div>
+    <div class="stat-card">
+      <h3>Open Opportunities</h3>
+      <p id="stat-open-opportunities">Loading...</p>
+    </div>
+    <div class="stat-card">
+      <h3>Won Opportunities</h3>
+      <p id="stat-won-opportunities">Loading...</p>
+    </div>
+    <div class="stat-card">
+      <h3>Total Revenue Won</h3>
+      <p id="stat-total-revenue">$0.00</p>
+    </div>
+  </div>
+  <div id="opportunities-list"></div>
+
+</div>
+
+<div class="card">
+  <h3>Performance Insights</h3>
+  <canvas id="sales-chart" width="400" height="200"></canvas>
+</div>
+{% endblock %}

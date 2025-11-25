@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+
+{% block title %}Tickets - CRM Pro{% endblock %}
+
+{% block page_header %}Support Tickets{% endblock %}
+
+{% block content %}
+    <div class="stat-grid">
+        <div class="card stat-card">
+            <h3>Avg Resolution Time</h3>
+            <p id="stat-avg-resolution">Loading...</p>
+        </div>
+        <div class="card">
+            <h3>Resolution Trend (Last 7)</h3>
+            <canvas id="resolution-chart" width="400" height="150"></canvas>
+        </div>
+    </div>
+    
+    <div class="grid">
+        <section class="card">
+            <h3>Create Support Ticket</h3>
+            <form id="ticket-form" class="loyalty-form">
+                <div class="form-group">
+                    <label for="ticket-customer-select">Customer</label>
+                    <select id="ticket-customer-select" class="form-control" required>
+                        <option value="">Loading customers...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ticket-issue">Issue</label>
+                    <textarea id="ticket-issue" class="form-control" rows="3" placeholder="Describe the issue" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="ticket-priority">Priority</label>
+                    <select id="ticket-priority" class="form-control">
+                        <option value="Low">Low</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Ticket</button>
+            </form>
+            <div id="ticket-status" class="status-message" style="margin-top: 1rem;">
+                <em>No ticket activity yet.</em>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>Recent Tickets</h3>
+            <ul id="ticket-list">
+                <li>Loading tickets...</li>
+            </ul>
+        </section>
+    </div>
+{% endblock %}

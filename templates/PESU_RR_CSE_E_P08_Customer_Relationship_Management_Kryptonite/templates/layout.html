@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}CRM Dashboard{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/main.css') }}"
+    />
+
+    <script>
+      (function () {
+        const theme = localStorage.getItem("theme");
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark-mode");
+        } else {
+          document.documentElement.classList.remove("dark-mode");
+        }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>CRM Pro</h2>
+      </div>
+      <nav class="sidebar-nav">
+        <a
+          href="/"
+          class="nav-item {% if request.path == '/' %}active{% endif %}"
+          >Dashboard</a
+        >
+
+        <a
+          href="/customers"
+          class="nav-item {% if request.path == '/customers' %}active{% endif %}"
+          >Customers</a
+        >
+
+        <a
+          href="/leads"
+          class="nav-item {% if request.path == '/leads' %}active{% endif %}"
+          >Leads</a
+        >
+
+        <a
+          href="/tickets"
+          class="nav-item {% if request.path.startswith('/tickets') %}active{% endif %}"
+          >Tickets</a
+        >
+
+        {% if current_role in ['Admin', 'Manager'] %}
+        <a
+          href="/sales"
+          class="nav-item {% if request.path == '/sales' %}active{% endif %}"
+          >Sales</a
+        >
+
+        <a
+          href="/campaigns"
+          class="nav-item {% if request.path.startswith('/campaigns') %}active{% endif %}"
+          >Campaigns</a
+        >
+        {% endif %} 
+        
+        {% if current_role == 'Admin' %}
+        <a
+          href="/monitor"
+          class="nav-item {% if request.path == '/monitor' %}active{% endif %}"
+          >Monitor</a
+        >
+        {% endif %}
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/logout" class="nav-item">Logout</a>
+        <button id="theme-toggle" aria-label="Toggle theme">&#9790;</button>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <header class="main-header">
+        <h1>{% block page_header %}{% endblock %}</h1>
+      </header>
+
+      <main class="content-area">{% block content %}{% endblock %}</main>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+      src="{{ url_for('static', filename='js/script.js') }}"
+      defer
+    ></script>
+  </body>
+</html>

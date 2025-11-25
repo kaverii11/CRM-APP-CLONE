@@ -1,0 +1,367 @@
+/* --- 1. Root Variables (Theme) --- */
+:root {
+    /* ✅ CHANGED: Inter Font for Professional Look */
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    
+    /* Light Mode */
+    --bg-sidebar: #172b4d;
+    --bg-primary: #f7f8fc;
+    --bg-secondary: #ffffff;
+    --text-primary: #172b4d;
+    --text-secondary: #5e6c84;
+    --text-on-dark: #ffffff;
+    --border-color: #ebecf0;
+    --shadow-color: rgba(23, 43, 77, 0.05); /* Softer shadow for lightness */
+    
+    /* ✅ CHANGED: "Money Blue-Teal" (Professional & Trustworthy in Light Mode) */
+    --primary-color: #00B8D9; 
+    --primary-hover: #008DA6;
+    
+    --danger-color: #de350b;
+
+    /* Border Radius */
+    --border-radius: 16px; /* Smooth, modern curves */
+    --sidebar-width-desktop: 250px;
+    --header-height: 60px;
+}
+
+/* Dark Mode */
+:root.dark-mode {
+    --bg-sidebar: #0e1a2e;
+    --bg-primary: #0B0E14;  /* Deepest "Void" Black for contrast */
+    --bg-secondary: #151A23; /* Slightly lighter card background */
+    --text-primary: #ffffff;
+    --text-secondary: #94A3B8;
+    --text-on-dark: #ffffff;
+    --border-color: #2D3748;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    
+    /* ✅ CHANGED: "Electric Sales Teal" (Pops against black) */
+    --primary-color: #22D3EE; 
+    --primary-hover: #67E8F9;
+    
+    --danger-color: #ff5b5b;
+}
+
+/* --- 2. Global Reset & Body --- */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: var(--font-sans);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 15px; /* Slightly smaller Inter looks cleaner */
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+/* --- 3. Main Layout (Sidebar + Content) --- */
+.sidebar {
+    width: var(--sidebar-width-desktop);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    
+    /* ✅ KEPT: Your Sunset Gradient */
+    background: linear-gradient(180deg, #fd746c 0%, #ff9068 30%, #ff5e62 100%);
+    color: var(--text-on-dark);
+    
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    border-right: 1px solid transparent;
+}
+
+/* Dark mode sidebar - Deep Money/Sales Vibe */
+:root.dark-mode .sidebar {
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border-right: 1px solid var(--border-color);
+}
+
+.main-content {
+    margin-left: var(--sidebar-width-desktop);
+    padding-top: var(--header-height);
+    width: calc(100% - var(--sidebar-width-desktop));
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+.main-header {
+    height: var(--header-height);
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width-desktop);
+    width: calc(100% - var(--sidebar-width-desktop));
+    z-index: 900;
+}
+
+.main-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700; /* Inter 700 is nice and bold */
+    margin: 0;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+.content-area {
+    padding: 30px;
+}
+
+/* --- 4. Sidebar Content --- */
+.sidebar-header {
+    padding: 0 25px;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-header h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+}
+
+.sidebar-nav {
+    flex-grow: 1;
+    padding: 15px 0;
+}
+
+.nav-item {
+    display: block;
+    padding: 14px 25px;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    font-weight: 500;
+    border-left: 4px solid transparent;
+    transition: all 0.2s;
+}
+
+.nav-item:hover {
+    color: #fff;
+    background-color: rgba(255,255,255,0.1);
+}
+
+.nav-item.active {
+    background-color: rgba(255,255,255,0.15);
+    color: #fff;
+    font-weight: 600;
+    border-left-color: #fff;
+}
+
+.sidebar-footer {
+    padding: 20px 25px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Theme Toggle Button */
+#theme-toggle {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+#theme-toggle:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* --- 5. General Components --- */
+
+/* BUTTONS - Now using the Teal Variables */
+.btn {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    font-family: var(--font-sans);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: #fff; /* Keep white text on teal */
+    /* If Light Mode, teal is dark enough. If Dark Mode, teal is bright. 
+       Let's make text black in dark mode for readability on neon teal */
+}
+
+/* Specific override for dark mode text contrast on neon buttons */
+:root.dark-mode .btn-primary {
+    color: #000; 
+    font-weight: 700;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(34, 211, 238, 0.3); /* Teal Glow */
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+.btn-secondary:hover {
+    border-color: var(--text-secondary);
+    background-color: var(--bg-secondary);
+}
+
+
+/* CARDS - The "Hover Outline" Logic */
+.card {
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    margin-bottom: 25px;
+    
+    /* ✅ Setup for the outline effect */
+    border: 1px solid transparent; 
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    /* ✅ THE TEAL OUTLINE */
+    border-color: var(--primary-color); 
+    /* ✅ SUBTLE TEAL GLOW */
+    box-shadow: 0 10px 30px rgba(0, 184, 217, 0.15); 
+}
+/* Stronger glow in dark mode */
+:root.dark-mode .card:hover {
+    box-shadow: 0 10px 30px rgba(34, 211, 238, 0.1); 
+}
+
+
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    border-bottom: none; /* Cleaner look without line */
+}
+
+/* Form Inputs */
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+}
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
+}
+
+/* --- 6. Stat Grid Specifics --- */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.stat-card p {
+    font-size: 2.8rem; /* Big Numbers */
+    font-weight: 700;
+    margin: 5px 0 0;
+    color: var(--text-primary); /* Keep numbers neutral, let outline pop */
+    letter-spacing: -1px;
+}
+
+/* Make the numbers pop with Teal in Dark Mode specifically */
+:root.dark-mode .stat-card p {
+    color: var(--primary-color);
+}
+
+/* --- 7. Tables --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .main-content { margin-left: 0; width: 100%; }
+    .main-header { left: 0; width: 100%; }
+}
+
+/* --- 8. Chart Fixes (Prevents infinite growing) --- */
+canvas {
+    max-width: 100%;
+}
+
+#resolution-chart {
+    height: 200px !important;
+    max-height: 220px;
+}
+
+#sales-chart {
+    max-height: 260px !important;
+}
+
+/* --- 9. Modal Styles (Restoring from previous version) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2000;
+}
+.modal {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    width: 90%; max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    padding: 20px;
+}
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px; margin-bottom: 15px;
+}
+.modal-close {
+    background: none; border: none; font-size: 1.5rem;
+    color: var(--text-secondary); cursor: pointer;
+}

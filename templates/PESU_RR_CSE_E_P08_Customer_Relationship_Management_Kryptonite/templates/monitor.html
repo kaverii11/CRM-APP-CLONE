@@ -1,0 +1,376 @@
+{% extends "layout.html" %}
+
+{% block title %}System Monitor - CRM Pro{% endblock %}
+
+{% block page_header %}Monitoring & Performance Dashboard{% endblock %}
+
+{% block content %}
+    <div class="stat-grid" style="margin-bottom: 25px;">
+        <div class="card stat-card">
+            <h3>Total Requests</h3>
+            <p id="stat-total-requests">0</p>
+        </div>
+        <div class="card stat-card">
+            <h3>Performance Alerts</h3>
+            <p id="stat-performance-alerts" style="color: var(--danger-color);">0</p>
+        </div>
+        <div class="card stat-card">
+            <h3>Error Rate</h3>
+            <p id="stat-error-rate">0%</p>
+        </div>
+        <div class="card stat-card">
+            <h3>Avg Response Time</h3>
+            <p id="stat-avg-response-time">0.0s</p>
+        </div>
+    </div>
+
+    <div class="grid" style="margin-bottom: 25px;">
+        <section class="card">
+            <h3>Performance Alerts</h3>
+            <div id="performance-alerts" style="max-height: 200px; overflow-y: auto;">
+                <p style="color: var(--text-secondary); font-style: italic;">Loading performance alerts...</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>System Health</h3>
+            <div id="system-health">
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>API Status</span>
+                        <span id="api-status" class="status-indicator">Checking...</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Database Status</span>
+                        <span id="db-status" class="status-indicator">Checking...</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Log File</span>
+                        <span id="log-status" class="status-indicator">Checking...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0;">System Logs & Audit Trail</h3>
+            <div>
+                <button id="clear-console-btn" class="btn btn-secondary" style="margin-right: 10px;">Clear View</button>
+                <span class="badge" id="log-count-badge" style="background: var(--primary-color); color: white; padding: 6px 12px; border-radius: 12px;">0 logs</span>
+            </div>
+        </div>
+        <div id="log-console" class="console-window">
+            <div style="text-align: center; color: var(--text-secondary); padding: 40px;">
+                Loading system logs...
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .console-window {
+            background-color: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            min-height: 500px;
+            max-height: 600px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .log-entry {
+            border-bottom: 1px solid #333;
+            padding: 6px 0;
+            word-wrap: break-word;
+        }
+        .log-entry.info {
+            color: #00ff00;
+        }
+        .log-entry.warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .log-entry.error {
+            color: #ff4d4d;
+            font-weight: bold;
+        }
+        .log-entry.performance {
+            color: #00d4ff;
+        }
+        .status-indicator {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .status-ok {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .alert-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            background-color: var(--bg-primary);
+        }
+        .alert-warning {
+            border-left-color: #ffc107;
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .alert-error {
+            border-left-color: #dc3545;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+
+    <script>
+        let requestStats = {
+            total: 0,
+            errors: 0,
+            warnings: 0,
+            totalTime: 0,
+            performanceAlerts: []
+        };
+
+        async function fetchLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                const data = await response.json();
+                const consoleDiv = document.getElementById('log-console');
+                
+                if (!data.logs || data.logs.length === 0) {
+                    consoleDiv.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">No logs available yet. Activity will appear here.</div>';
+                    return;
+                }
+
+                // Update log count
+                document.getElementById('log-count-badge').textContent = `${data.logs.length} logs`;
+
+                // Reset stats
+                requestStats = {
+                    total: 0,
+                    errors: 0,
+                    warnings: 0,
+                    totalTime: 0,
+                    performanceAlerts: []
+                };
+
+                consoleDiv.innerHTML = '';
+                
+                data.logs.forEach(line => {
+                    const div = document.createElement('div');
+                    div.className = 'log-entry';
+                    
+                    // Parse log line
+                    if (line.includes('Request:')) {
+                        requestStats.total++;
+                        div.classList.add('info');
+                        
+                        // Extract response time
+                        const timeMatch = line.match(/Time: ([\d.]+)s/);
+                        if (timeMatch) {
+                            const time = parseFloat(timeMatch[1]);
+                            requestStats.totalTime += time;
+                            
+                            // Check for performance alerts
+                            if (time > 1.0) {
+                                div.classList.remove('info');
+                                div.classList.add('performance');
+                                requestStats.warnings++;
+                                
+                                // Extract endpoint
+                                const pathMatch = line.match(/Request: \w+ (\S+)/);
+                                if (pathMatch) {
+                                    requestStats.performanceAlerts.push({
+                                        path: pathMatch[1],
+                                        time: time,
+                                        message: line
+                                    });
+                                }
+                            }
+                        }
+                        
+                        // Check for error status
+                        if (line.includes('Status: 50') || line.includes('Status: 40')) {
+                            div.classList.remove('info');
+                            div.classList.add('error');
+                            requestStats.errors++;
+                        }
+                    } else if (line.includes('WARNING') || line.includes('PERFORMANCE ALERT')) {
+                        div.classList.add('warning');
+                        requestStats.warnings++;
+                        
+                        // Extract performance alerts
+                        if (line.includes('PERFORMANCE ALERT')) {
+                            const pathMatch = line.match(/on (\S+)/);
+                            const timeMatch = line.match(/\(([\d.]+)s\)/);
+                            if (pathMatch && timeMatch) {
+                                requestStats.performanceAlerts.push({
+                                    path: pathMatch[1],
+                                    time: parseFloat(timeMatch[1]),
+                                    message: line
+                                });
+                            }
+                        }
+                    } else if (line.includes('ERROR') || line.includes('CRITICAL') || line.includes('FATAL')) {
+                        div.classList.add('error');
+                        requestStats.errors++;
+                    } else {
+                        div.classList.add('info');
+                    }
+                    
+                    // Clean up the log line (remove extra whitespace)
+                    const cleanLine = line.trim();
+                    div.textContent = cleanLine;
+                    consoleDiv.appendChild(div);
+                });
+
+                // Update statistics
+                updateStatistics();
+                updatePerformanceAlerts();
+            } catch (error) {
+                console.error("Failed to fetch logs:", error);
+                document.getElementById('log-console').innerHTML = 
+                    '<div style="text-align: center; color: #ff4d4d; padding: 40px;">Error loading logs. Please refresh the page.</div>';
+            }
+        }
+
+        function updateStatistics() {
+            // Update total requests
+            document.getElementById('stat-total-requests').textContent = requestStats.total;
+
+            // Update performance alerts
+            document.getElementById('stat-performance-alerts').textContent = requestStats.warnings;
+
+            // Update error rate
+            const errorRate = requestStats.total > 0 
+                ? ((requestStats.errors / requestStats.total) * 100).toFixed(1)
+                : 0;
+            document.getElementById('stat-error-rate').textContent = errorRate + '%';
+            if (errorRate > 10) {
+                document.getElementById('stat-error-rate').style.color = 'var(--danger-color)';
+            }
+
+            // Update average response time
+            const avgTime = requestStats.total > 0 
+                ? (requestStats.totalTime / requestStats.total).toFixed(3)
+                : 0;
+            document.getElementById('stat-avg-response-time').textContent = avgTime + 's';
+            if (avgTime > 1.0) {
+                document.getElementById('stat-avg-response-time').style.color = 'var(--danger-color)';
+            }
+        }
+
+        function updatePerformanceAlerts() {
+            const alertsDiv = document.getElementById('performance-alerts');
+            
+            if (requestStats.performanceAlerts.length === 0) {
+                alertsDiv.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;">No performance alerts. All requests are within acceptable time limits.</p>';
+                return;
+            }
+
+            // Show last 5 alerts
+            const recentAlerts = requestStats.performanceAlerts.slice(-5).reverse();
+            // Clear previous alerts
+            alertsDiv.innerHTML = '';
+            recentAlerts.forEach(alert => {
+                const div = document.createElement('div');
+                div.className = 'alert-item alert-warning';
+
+                const strong = document.createElement('strong');
+                strong.textContent = '⚠️ Slow Response';
+                div.appendChild(strong);
+                div.appendChild(document.createElement('br'));
+
+                const pathSpan = document.createElement('span');
+                pathSpan.style.fontSize = '0.9rem';
+                pathSpan.textContent = alert.path;
+                div.appendChild(pathSpan);
+                div.appendChild(document.createElement('br'));
+
+                const timeSpan = document.createElement('span');
+                timeSpan.style.fontSize = '0.85rem';
+                timeSpan.style.opacity = '0.8';
+                timeSpan.textContent = `Response time: ${alert.time.toFixed(3)}s`;
+                div.appendChild(timeSpan);
+
+                alertsDiv.appendChild(div);
+            });
+        }
+
+        function checkSystemHealth() {
+            // Check API status
+            fetch('/api/customer-kpis')
+                .then(response => {
+                    document.getElementById('api-status').textContent = response.ok ? '✓ Operational' : '⚠ Degraded';
+                    document.getElementById('api-status').className = response.ok ? 'status-indicator status-ok' : 'status-indicator status-warning';
+                })
+                .catch(() => {
+                    document.getElementById('api-status').textContent = '✗ Offline';
+                    document.getElementById('api-status').className = 'status-indicator status-error';
+                });
+
+            // Check database status (will be 503 if serviceAccountKey.json is missing)
+            fetch('/api/customers')
+                .then(response => {
+                    if (response.status === 503) {
+                        document.getElementById('db-status').textContent = '⚠ Configuration Issue';
+                        document.getElementById('db-status').className = 'status-indicator status-warning';
+                    } else if (response.ok) {
+                        document.getElementById('db-status').textContent = '✓ Connected';
+                        document.getElementById('db-status').className = 'status-indicator status-ok';
+                    } else {
+                        document.getElementById('db-status').textContent = '⚠ Degraded';
+                        document.getElementById('db-status').className = 'status-indicator status-warning';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('db-status').textContent = '✗ Error';
+                    document.getElementById('db-status').className = 'status-indicator status-error';
+                });
+
+            // Check log file status
+            fetch('/api/logs')
+                .then(response => {
+                    document.getElementById('log-status').textContent = response.ok ? '✓ Active' : '⚠ Error';
+                    document.getElementById('log-status').className = response.ok ? 'status-indicator status-ok' : 'status-indicator status-warning';
+                })
+                .catch(() => {
+                    document.getElementById('log-status').textContent = '✗ Error';
+                    document.getElementById('log-status').className = 'status-indicator status-error';
+                });
+        }
+
+        // Clear console view
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('clear-console-btn').addEventListener('click', function() {
+                const consoleDiv = document.getElementById('log-console');
+                consoleDiv.scrollTop = 0;
+                consoleDiv.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">Console cleared. Waiting for new logs...</div>';
+            });
+
+            // Initial load
+            fetchLogs();
+            checkSystemHealth();
+
+            // Auto-refresh every 3 seconds
+            setInterval(fetchLogs, 3000);
+            setInterval(checkSystemHealth, 10000); // Check health every 10 seconds
+        });
+    </script>
+{% endblock %}
