@@ -1,0 +1,27 @@
+# Virtual environments
+venv/
+.venv/
+
+# macOS & editor junk
+.DS_Store
+.idea/
+.vscode/
+
+# Python cache / artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build / packaging outputs
+dist/
+build/
+*.egg-info/
+
+# Environment variables and logs
+.env
+*.log
+.coverage
+
+# Sensitive Firebase key
+serviceAccountKey.json

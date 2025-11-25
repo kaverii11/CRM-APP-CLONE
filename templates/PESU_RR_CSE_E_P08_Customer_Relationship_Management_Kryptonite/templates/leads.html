@@ -1,0 +1,595 @@
+{% extends "layout.html" %}
+
+{% block title %}Leads - CRM Pro{% endblock %}
+
+{% block page_header %}Lead Management{% endblock %}
+
+{% block content %}
+    <div class="page-actions">
+        <button id="add-lead-btn" class="btn btn-primary">
+            <span style="margin-right: 8px;">➕</span>Capture New Lead
+        </button>
+    </div>
+
+    <div id="lead-status" class="status-message" style="display: none;"></div>
+
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">All Leads</h3>
+            <span id="lead-count" class="lead-count-badge">0 leads</span>
+        </div>
+        <div class="table-container">
+            <table id="leads-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Source</th>
+                        <th>Status</th>
+                        <th>Assigned To</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="leads-table-body">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-secondary);">
+                            <div style="font-size: 1.1rem;">Loading leads...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="lead-modal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Capture New Lead</h3>
+                <button id="modal-close-btn" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="lead-form">
+                    <div class="form-group">
+                        <label for="lead-name">Name *</label>
+                        <input type="text" id="lead-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lead-email">Email *</label>
+                        <input type="email" id="lead-email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lead-source">Source *</label>
+                        <select id="lead-source" class="form-control" required>
+                            <option value="">Select source...</option>
+                            <option value="Website">Website</option>
+                            <option value="Referral">Referral</option>
+                            <option value="Social Media">Social Media</option>
+                            <option value="Email Campaign">Email Campaign</option>
+                            <option value="Trade Show">Trade Show</option>
+                            <option value="Partner">Partner</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Capture Lead</button>
+                        <button type="button" id="cancel-btn" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="assign-modal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Assign Lead to Sales Rep</h3>
+                <button id="assign-modal-close-btn" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="assign-form">
+                    <input type="hidden" id="assign-lead-id">
+                    <div class="form-group">
+                        <label for="assign-rep-id">Sales Rep ID *</label>
+                        <input type="text" id="assign-rep-id" class="form-control" required placeholder="e.g., REP-001">
+                    </div>
+                    <div class="form-group">
+                        <label for="assign-rep-name">Sales Rep Name</label>
+                        <input type="text" id="assign-rep-name" class="form-control" placeholder="e.g., John Doe">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Assign Lead</button>
+                        <button type="button" id="cancel-assign-btn" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lead Management JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            const addLeadBtn = document.getElementById('add-lead-btn');
+            const leadModal = document.getElementById('lead-modal');
+            const assignModal = document.getElementById('assign-modal');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const assignModalCloseBtn = document.getElementById('assign-modal-close-btn');
+            const leadForm = document.getElementById('lead-form');
+            const assignForm = document.getElementById('assign-form');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const cancelAssignBtn = document.getElementById('cancel-assign-btn');
+            const statusMessage = document.getElementById('lead-status');
+
+            // Load leads on page load
+            loadLeads();
+
+            // Open modal for new lead
+            addLeadBtn.addEventListener('click', function() {
+                document.getElementById('modal-title').textContent = 'Capture New Lead';
+                leadForm.reset();
+                leadModal.style.display = 'flex';
+            });
+
+            // Close modals
+            modalCloseBtn.addEventListener('click', closeLeadModal);
+            assignModalCloseBtn.addEventListener('click', closeAssignModal);
+            cancelBtn.addEventListener('click', closeLeadModal);
+            cancelAssignBtn.addEventListener('click', closeAssignModal);
+
+            // Close modal on overlay click
+            leadModal.addEventListener('click', function(e) {
+                if (e.target === leadModal) closeLeadModal();
+            });
+            assignModal.addEventListener('click', function(e) {
+                if (e.target === assignModal) closeAssignModal();
+            });
+
+            function closeLeadModal() {
+                leadModal.style.display = 'none';
+                leadForm.reset();
+            }
+
+            function closeAssignModal() {
+                assignModal.style.display = 'none';
+                assignForm.reset();
+            }
+
+            // Handle lead form submission
+            leadForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const leadData = {
+                    name: document.getElementById('lead-name').value.trim(),
+                    email: document.getElementById('lead-email').value.trim(),
+                    source: document.getElementById('lead-source').value
+                };
+
+                if (!leadData.name || !leadData.email || !leadData.source) {
+                    showStatus('Please fill in all required fields.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/lead', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(leadData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        showStatus(`Lead captured successfully! Lead ID: ${result.id}`, 'success');
+                        closeLeadModal();
+                        loadLeads();
+                    } else {
+                        showStatus(result.error || 'Failed to capture lead', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error capturing lead:', error);
+                    showStatus('Error capturing lead. Please try again.', 'error');
+                }
+            });
+
+            // Handle assign form submission
+            assignForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const leadId = document.getElementById('assign-lead-id').value;
+                const assignData = {
+                    rep_id: document.getElementById('assign-rep-id').value.trim(),
+                    rep_name: document.getElementById('assign-rep-name').value.trim() || 'Unspecified'
+                };
+
+                if (!assignData.rep_id) {
+                    showStatus('Sales Rep ID is required.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/lead/${leadId}/assign`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(assignData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        showStatus(result.message, 'success');
+                        closeAssignModal();
+                        loadLeads();
+                    } else {
+                        showStatus(result.error || 'Failed to assign lead', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error assigning lead:', error);
+                    showStatus('Error assigning lead. Please try again.', 'error');
+                }
+            });
+
+            // Load all leads
+            async function loadLeads() {
+                try {
+                    const response = await fetch('/api/leads');
+                    if (!response.ok) throw new Error('Failed to fetch leads');
+                    
+                    const leads = await response.json();
+                    displayLeads(leads);
+                } catch (error) {
+                    console.error('Error loading leads:', error);
+                    document.getElementById('leads-table-body').innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 30px;">
+                                <div style="color: var(--danger-color); font-size: 1rem; margin-bottom: 10px;">
+                                    ❌ Error loading leads
+                                </div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                                    Please refresh the page or check your connection.
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    updateLeadCount(0);
+                }
+            }
+
+            // Display leads in table
+            function displayLeads(leads) {
+                const tbody = document.getElementById('leads-table-body');
+                
+                if (!leads || leads.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                                <div style="font-size: 1.1rem; margin-bottom: 10px;">📋 No leads found</div>
+                                <div style="font-size: 0.9rem;">Create your first lead to get started!</div>
+                            </td>
+                        </tr>
+                    `;
+                    updateLeadCount(0);
+                    return;
+                }
+
+                updateLeadCount(leads.length);
+
+                tbody.innerHTML = leads.map(lead => {
+                    const createdAt = lead.createdAt ? 
+                        new Date(lead.createdAt._seconds ? lead.createdAt._seconds * 1000 : lead.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        }) : 
+                        'N/A';
+                    
+                    const assignedTo = lead.assigned_to_name ? 
+                        `<div class="assigned-info">
+                            <div class="assigned-name">${escapeHTML(lead.assigned_to_name)}</div>
+                            <div class="assigned-id">${escapeHTML(lead.assigned_to_id)}</div>
+                         </div>` : 
+                        '<span class="unassigned-badge">Unassigned</span>';
+                    
+                    const statusClass = (lead.status?.toLowerCase() || 'new').replace(' ', '-');
+                    
+                    return `
+                        <tr class="lead-row">
+                            <td><strong>${escapeHTML(lead.name || 'N/A')}</strong></td>
+                            <td><a href="mailto:${escapeHTML(lead.email || '')}" class="email-link">${escapeHTML(lead.email || 'N/A')}</a></td>
+                            <td><span class="source-badge">${escapeHTML(lead.source || 'N/A')}</span></td>
+                            <td>
+                                <span class="status-badge status-${statusClass}">
+                                    ${escapeHTML(lead.status || 'New')}
+                                </span>
+                            </td>
+                            <td>${assignedTo}</td>
+                            <td><span class="date-text">${createdAt}</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    ${lead.status !== 'Converted' ? 
+                                        `<button class="btn btn-sm btn-convert" onclick="convertLead('${lead.id}')" title="Convert to Opportunity">
+                                            ✨ Convert
+                                         </button>
+                                         <button class="btn btn-sm btn-assign" onclick="assignLead('${lead.id}')" title="Assign to Sales Rep">
+                                            👤 Assign
+                                         </button>` : 
+                                        '<span class="converted-text">✓ Converted</span>'
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Convert lead to opportunity
+            window.convertLead = async function(leadId) {
+                if (!confirm('Are you sure you want to convert this lead to an opportunity?')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/lead/${leadId}/convert`, {
+                        method: 'POST'
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        showStatus(result.message, 'success');
+                        loadLeads();
+                    } else {
+                        showStatus(result.error || 'Failed to convert lead', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error converting lead:', error);
+                    showStatus('Error converting lead. Please try again.', 'error');
+                }
+            };
+
+            // Assign lead to sales rep
+            window.assignLead = function(leadId) {
+                document.getElementById('assign-lead-id').value = leadId;
+                assignModal.style.display = 'flex';
+            };
+
+            // Show status message
+            function showStatus(message, type) {
+                const icon = type === 'success' ? '✅' : '❌';
+                statusMessage.innerHTML = '';
+                const iconSpan = document.createElement('span');
+                iconSpan.textContent = icon;
+                const messageSpan = document.createElement('span');
+                messageSpan.textContent = message;
+                statusMessage.appendChild(iconSpan);
+                statusMessage.appendChild(messageSpan);
+                statusMessage.className = `status-message ${type}`;
+                statusMessage.style.display = 'flex';
+                
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 5000);
+            }
+
+            // Update lead count
+            function updateLeadCount(count) {
+                const countBadge = document.getElementById('lead-count');
+                if (countBadge) {
+                    countBadge.textContent = `${count} ${count === 1 ? 'lead' : 'leads'}`;
+                }
+            }
+
+            // Escape HTML helper
+            function escapeHTML(str) {
+                if (!str) return '';
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+        });
+    </script>
+
+    <style>
+        /* Lead Count Badge */
+        .lead-count-badge {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(108, 99, 255, 0.3);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .status-new { 
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb); 
+            color: #1565c0; 
+            border: 1px solid #90caf9;
+        }
+        .status-converted { 
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9); 
+            color: #2e7d32; 
+            border: 1px solid #81c784;
+        }
+
+        /* Table Row Styling */
+        .lead-row {
+            transition: background-color 0.2s ease;
+        }
+        .lead-row:hover {
+            background-color: var(--bg-primary);
+        }
+        .lead-row td {
+            padding: 16px 12px;
+            vertical-align: middle;
+        }
+
+        /* Email Link */
+        .email-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .email-link:hover {
+            color: var(--primary-hover);
+            text-decoration: underline;
+        }
+
+        /* Source Badge */
+        .source-badge {
+            background-color: var(--bg-primary);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Assigned Info */
+        .assigned-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .assigned-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        .assigned-id {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .unassigned-badge {
+            color: var(--text-secondary);
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        /* Date Text */
+        .date-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .btn-convert { 
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+        .btn-convert:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+        .btn-assign { 
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: white;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+        .btn-assign:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        }
+        .converted-text {
+            color: #2e7d32;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        /* Status Message */
+        .status-message {
+            padding: 14px 18px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+        .status-message.success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 1px solid #81c784;
+        }
+        .status-message.error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 1px solid #e57373;
+        }
+
+        /* Table Improvements */
+        #leads-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        #leads-table thead th {
+            background-color: var(--bg-primary);
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        #leads-table tbody td {
+            border-bottom: 1px solid var(--border-color);
+        }
+        #leads-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Modal Improvements */
+        .modal {
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        .modal-header h3 {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+            .btn-sm {
+                width: 100%;
+            }
+        }
+    </style>
+{% endblock %}
+

@@ -1,0 +1,10 @@
+[run]
+omit = 
+    *__main__*
+    tests/*
+    venv/*
+    */site-packages/*
+
+[report]
+fail_under = 75
+show_missing = True

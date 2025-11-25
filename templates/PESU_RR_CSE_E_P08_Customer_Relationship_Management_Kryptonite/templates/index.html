@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard - CRM Pro{% endblock %}
+
+{% block page_header %}Dashboard Overview{% endblock %}
+
+{% block content %}
+
+    <div class="page-actions" style="margin-bottom: 20px; text-align: right;">
+        <a href="/report/kpis" target="_blank" class="btn btn-primary">Export Full KPI Report (PDF)</a>
+    </div>
+
+    <div class="stat-grid">
+        <div class="card stat-card">
+            <h3>Total Customers</h3>
+            <p id="stat-total-customers">0</p>
+        </div>
+
+        <div class="card stat-card">
+            <h3>Open Tickets</h3>
+            <p id="stat-open-tickets">0</p>
+        </div>
+
+        <div class="card stat-card">
+            <h3>New Leads (Example)</h3>
+            <p id="stat-new-leads">0</p>
+        </div>
+
+        <div class="card stat-card">
+            <h3>New Customers (30 Days)</h3>
+            <p id="stat-new-customers-30d">0</p>
+        </div>
+
+        
+    </div>
+
+    <div class="grid">
+        <section class="card">
+            <h3>Quick Actions</h3>
+            <div class="actions">
+                <a href="/customers" class="btn btn-primary">Manage Customers</a>
+                <a href="/tickets" class="btn btn-secondary">Go to Tickets</a>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>Recent Activity</h3>
+            <ul id="recent-activity-list">
+                <li>No recent activity.</li>
+            </ul>
+        </section>
+    </div>
+
+   
+
+{% endblock %}

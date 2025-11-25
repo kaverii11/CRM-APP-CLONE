@@ -1,0 +1,206 @@
+{% extends "layout.html" %} 
+{% block title %}Marketing Campaigns - CRM Pro{% endblock %} 
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4" style="display: flex; justify-content: space-between; align-items: center">
+  <div>
+    <h2 style="font-weight: 700; color: var(--text-primary)">Marketing Campaigns</h2>
+    <p style="color: var(--text-secondary)">Create, schedule, and track your Email & SMS outreach.</p>
+  </div>
+  <button class="btn btn-primary" onclick="openModal()">+ Create Campaign</button>
+</div>
+
+<div class="stat-grid">
+  <div class="glass-card stat-card">
+    <h3>Total Campaigns</h3>
+    <p id="total-campaigns">0</p>
+  </div>
+  <div class="glass-card stat-card">
+    <h3>Avg Open Rate</h3>
+    <p id="avg-open-rate">0%</p>
+  </div>
+  <div class="glass-card stat-card">
+    <h3>Credits Left</h3>
+    <p>4,500</p>
+  </div>
+</div>
+
+<div class="glass-card">
+  <h3 style="margin-bottom: 20px">Campaign History</h3>
+  <div style="overflow-x: auto">
+    <table style="width: 100%; border-collapse: collapse">
+      <thead>
+        <tr style="text-align: left; border-bottom: 1px solid var(--border-color)">
+          <th style="padding: 15px">Campaign Name</th>
+          <th style="padding: 15px">Type</th>
+          <th style="padding: 15px">Segment</th>
+          <th style="padding: 15px">Recipients</th>
+          <th style="padding: 15px">Status</th>
+          <th style="padding: 15px">Performance</th>
+        </tr>
+      </thead>
+      <tbody id="campaign-table-body">
+        <tr>
+          <td colspan="6" style="padding: 20px; text-align: center">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="campaignModal" class="modal-overlay" style="display: none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>New Marketing Campaign</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="campaignForm">
+        <div class="form-group">
+          <label>Campaign Name / Subject Line</label>
+          <input type="text" id="c-name" required placeholder="e.g., Summer Sale Alert"/>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px">
+          <div class="form-group">
+            <label>Channel</label>
+            <select id="c-type">
+              <option value="Email">📧 Email</option>
+              <option value="SMS">📱 SMS Alert</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Target Audience</label>
+            <select id="c-segment">
+              <option value="All">All Customers</option>
+              <option value="VIP">VIP (Gold Tier)</option>
+              <option value="New">New Users (Last 30 Days)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Message Content</label>
+          <textarea id="c-message" rows="4" required placeholder="Type your marketing message here..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">🚀 Send Blast</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", loadCampaigns);
+
+  async function loadCampaigns() {
+    try {
+      const res = await fetch("/api/campaigns");
+      const campaigns = await res.json();
+      const tbody = document.getElementById("campaign-table-body");
+
+      // Stats Logic
+      document.getElementById("total-campaigns").innerText = campaigns.length;
+      let totalOpen = 0;
+      campaigns.forEach((c) => (totalOpen += c.open_rate || 0));
+      const avg = campaigns.length ? Math.round(totalOpen / campaigns.length) : 0;
+      document.getElementById("avg-open-rate").innerText = avg + "%";
+
+      if (campaigns.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px;">No campaigns yet. Create one!</td></tr>`;
+        return;
+      }
+
+      // Render Rows
+      tbody.innerHTML = campaigns.map(c => `
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 15px; font-weight: 600;">${c.name}</td>
+                <td style="padding: 15px;">
+                    <span style="background: ${c.type === "SMS" ? "#e3f2fd" : "#fff3e0"}; 
+                                 color: ${c.type === "SMS" ? "#1565c0" : "#e65100"}; 
+                                 padding: 5px 10px; borderRadius: 12px; font-size: 0.85rem;">
+                        ${c.type === "SMS" ? "📱 SMS" : "📧 Email"}
+                    </span>
+                </td>
+                <td style="padding: 15px;">${c.segment}</td>
+                <td style="padding: 15px;">${c.audience_size || 0}</td>
+                <td style="padding: 15px; color: green;">✔ ${c.status}</td>
+                <td style="padding: 15px;">
+                    Open: <b id="open-${c.id}">${c.open_rate}%</b> <br>
+                    Click: <b>${c.click_rate}%</b>
+                    <button onclick="simulateOpen('${c.id}')" 
+                            title="Simulate customer opening email"
+                            style="font-size:0.8rem; margin-left:8px; cursor:pointer; border:none; background:none;">
+                        ⚡
+                    </button>
+                </td>
+            </tr>
+        `).join("");
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // Simulation Logic
+  async function simulateOpen(id) {
+    try {
+      const res = await fetch(`/api/campaign/${id}/simulate-open`, { method: "POST" });
+      if (res.ok) {
+        // Quick flash effect
+        const el = document.getElementById(`open-${id}`);
+        if(el) el.style.color = "green";
+        setTimeout(() => loadCampaigns(), 300); // Reload table to see new numbers
+      }
+    } catch (err) {
+      console.error("Sim failed");
+    }
+  }
+
+  // Modal Logic
+  function openModal() { document.getElementById("campaignModal").style.display = "flex"; }
+  function closeModal() { document.getElementById("campaignModal").style.display = "none"; }
+
+  document.getElementById("campaignForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      const originalText = btn.innerText;
+      btn.innerText = "Sending...";
+      btn.disabled = true;
+
+      const payload = {
+        name: document.getElementById("c-name").value,
+        type: document.getElementById("c-type").value,
+        segment: document.getElementById("c-segment").value,
+        message: document.getElementById("c-message").value,
+      };
+
+      try {
+        const res = await fetch("/api/campaigns", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          alert("✅ " + data.message);
+          closeModal();
+          loadCampaigns();
+          e.target.reset();
+        } else {
+          alert("❌ Error: " + data.error);
+        }
+      } catch (err) {
+        alert("Server error");
+      } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }
+    });
+</script>
+
+{% endblock %}

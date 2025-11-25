@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRM Pro - Login</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background-color: #f4f7f6;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Poppins", sans-serif;
+      }
+      .login-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        max-width: 900px;
+        width: 90%;
+        display: flex;
+      }
+      .login-img {
+        background: linear-gradient(
+          135deg,
+          #ff6b6b 0%,
+          #ff8e53 100%
+        ); /* Matches Sidebar */
+        width: 50%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        padding: 40px;
+      }
+      .login-form {
+        width: 50%;
+        padding: 50px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .btn-primary {
+        background-color: #ff6b6b;
+        border: none;
+        padding: 12px;
+      }
+      .btn-primary:hover {
+        background-color: #ee5a5a;
+      }
+
+      /* Mobile Optimization (Epic 10) */
+      @media (max-width: 768px) {
+        .login-card {
+          flex-direction: column;
+        }
+        .login-img {
+          width: 100%;
+          padding: 30px;
+          display: none;
+        } /* Hide image on mobile */
+        .login-form {
+          width: 100%;
+          padding: 30px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-card">
+      <div class="login-img">
+        <h1>CRM Pro</h1>
+        <p class="lead text-center">
+          Manage your customers, leads, and sales in one secure place.
+        </p>
+      </div>
+
+    <div class="login-form">
+           <h3 class="mb-4">Welcome Back</h3>
+           <form id="loginForm">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="email" required placeholder="admin@crm.com">
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required placeholder="admin123">
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <a href="#" id="forgot-link" class="text-secondary small" style="text-decoration: none;">Forgot password?</a>
+                </div>
+            </form>
+            
+            <div id="error-msg" class="alert alert-danger mt-3 d-none" role="alert"></div>
+        </div>
+
+
+    <script>
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          const errorBox = document.getElementById("error-msg");
+
+          try {
+            const response = await fetch("/api/auth/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              // Login Success: Redirect to Dashboard
+              window.location.href = "/";
+            } else {
+              // Login Failed: Show error
+              errorBox.textContent = data.message;
+              errorBox.classList.remove("d-none");
+            }
+          } catch (err) {
+            errorBox.textContent = "Server connection failed.";
+            errorBox.classList.remove("d-none");
+          }
+        });
+      // Handle Password Reset
+      document
+        .getElementById("forgot-link")
+        .addEventListener("click", async function (e) {
+          e.preventDefault();
+          const email = document.getElementById("email").value;
+
+          if (!email) {
+            alert("Please enter your email address in the box first.");
+            return;
+          }
+
+          if (confirm(`Send password reset link to ${email}?`)) {
+            const response = await fetch("/api/auth/reset-password", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email }),
+            });
+            const data = await response.json();
+            alert(data.message);
+          }
+        });
+    </script>
+  </body>
+</html>
