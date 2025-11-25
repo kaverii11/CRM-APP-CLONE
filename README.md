@@ -13,7 +13,7 @@
 - [Project Overview](#-project-overview)
 - [Key Features](#-key-features)
 - [System Architecture](#-system-architecture)
-- [Technology Stack](#-technology-stack)
+- [Technology Stack](#-tech-stack)
 ---
 
 ## 📄 Project Overview
