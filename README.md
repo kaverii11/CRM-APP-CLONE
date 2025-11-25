@@ -14,6 +14,7 @@
 - [Key Features](#-key-features)
 - [System Architecture](#-system-architecture)
 - [Technology Stack](#-tech-stack)
+- [Installation](#-installation--setup)
 ---
 
 ## 📄 Project Overview
